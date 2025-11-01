@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "jest",
     "dev": "tsc --watch",
     "start": "yarn build && node dist/index.js"
   },
