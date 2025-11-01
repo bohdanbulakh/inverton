@@ -18,3 +18,5 @@ node_modules
 
 .idea
 dist
+.env*
+/redis_data
