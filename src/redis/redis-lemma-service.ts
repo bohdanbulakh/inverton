@@ -4,13 +4,13 @@ export class RedisLemmaService {
   constructor (private readonly redisClient: Redis) {}
 
   async set (language: string, term: string, lemma: string): Promise<void> {
-    await this.redisClient.set(`lemma:${language}:${term}`, lemma);
+    await this.redisClient.set(`lemma:${term}:${language}`, lemma);
   }
 
   async setMany (language: string, pairs: [string, string][]): Promise<void> {
     const pipeline = this.redisClient.pipeline();
     for (const [term, lemma] of pairs) {
-      pipeline.set(`lemma:${language}:${term}`, lemma);
+      pipeline.set(`lemma:${term}:${language}`, lemma);
     }
     await pipeline.exec();
   }
@@ -33,7 +33,7 @@ export class RedisLemmaService {
   }
 
   async deleteAllLemmas (language: string): Promise<void> {
-    const keyPattern = `lemma:${language}:*`;
+    const keyPattern = `lemma:*:${language}`;
     const stream = this.redisClient.scanStream({
       match: keyPattern,
       count: 100,

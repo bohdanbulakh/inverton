@@ -9,10 +9,13 @@ import * as unzipper from 'unzipper';
 import { Readable } from 'stream';
 import { AsyncQueue } from '../../async';
 import * as constants from 'node:constants';
+import * as stopWordsIso from 'stopwords-iso';
+import { StopWordsLoader } from './stopwords-loader';
 
 export class RedisClient extends Redis {
   private readonly redisNormalizeService: RedisLemmaService;
   private readonly lemmaLoadingPromise: Promise<void>;
+  private readonly stopWordsLoadingPromise: Promise<void>;
 
   constructor (
     args: RedisOptions,
@@ -22,11 +25,15 @@ export class RedisClient extends Redis {
     super(args);
     this.redisNormalizeService = new RedisLemmaService(this);
     this.lemmaLoadingPromise = this.loadLemmas().catch(console.error);
+    this.stopWordsLoadingPromise = this.loadStopWords().catch(console.error);
   }
 
   async ready () {
     await this.checkArgs();
-    await this.lemmaLoadingPromise;
+    await Promise.all([
+      this.lemmaLoadingPromise,
+      this.stopWordsLoadingPromise,
+    ]);
   }
 
   private async checkArgs () {
@@ -84,8 +91,10 @@ export class RedisClient extends Redis {
               return;
             }
 
+            console.log(`Started loading for language: ${langCode}`);
+
             await this.redisNormalizeService.deleteAllLemmas(langCode);
-            await this.processFileStream(entry, langCode);
+            await this.loadLemmaToRedis(entry, langCode);
             await this.redisNormalizeService.setLemmaHash(langCode, comparedHashes.newHash);
           } catch (err) {
             console.error(`FAILED to process ${fileName}:`, err);
@@ -96,6 +105,40 @@ export class RedisClient extends Redis {
         taskQueue.addTasks(task);
       });
     });
+  }
+
+  private async loadStopWords () {
+    const languages = Object.keys(stopWordsIso).filter((code) => code !== 'default') as (keyof typeof stopWordsIso)[];
+
+    console.log(`Starting loading stop words for ${languages.length} languages...`);
+
+    const taskQueue = new AsyncQueue(this.maxLemmaLoadConcurrency);
+
+    for (const langCode of languages) {
+      taskQueue.addTasks(async () => {
+        const words = stopWordsIso[langCode];
+
+        if (!words || !Array.isArray(words)) {
+          return;
+        }
+
+        const loader = new StopWordsLoader(this, langCode);
+
+        for (const word of words) {
+          const canContinue = loader.write(word);
+
+          if (!canContinue) {
+            await new Promise<void>((resolve) => loader.once('drain', resolve));
+          }
+        }
+
+        loader.end();
+        await finished(loader);
+      });
+    }
+
+    await taskQueue.onDone();
+    console.log('Finished loading stop words.');
   }
 
   private async compareLangHashes (langCode: string, entry: unzipper.Entry) {
@@ -109,11 +152,11 @@ export class RedisClient extends Redis {
     };
   }
 
-  private async processFileStream (
+  private async loadLemmaToRedis (
     fileStream: Readable,
     langCode: string,
   ): Promise<void> {
-    const lemmaLoader = new LemmaRedisLoader(this.redisNormalizeService, langCode);
+    const lemmaLoader = new LemmaRedisLoader(this, langCode);
 
     const lineReader = readline.createInterface({
       input: fileStream,
@@ -150,6 +193,6 @@ const archivePath = path.join(process.cwd(), 'data', 'dictionaries.zip');
 const client = new RedisClient({
   port: 6379,
   host: 'localhost',
-}, 5, archivePath);
+}, 20, archivePath);
 
 export default client;

@@ -4687,6 +4687,7 @@ __metadata:
     meow: "npm:^11.0.0"
     prettier: "npm:^2.8.7"
     react: "npm:^18.2.0"
+    stopwords-iso: "npm:^1.1.0"
     ts-jest: "npm:^29.4.5"
     ts-node: "npm:^10.9.2"
     tsconfig-paths: "npm:^4.2.0"
@@ -7729,6 +7730,13 @@ __metadata:
     es-errors: "npm:^1.3.0"
     internal-slot: "npm:^1.1.0"
   checksum: 10c0/de4e45706bb4c0354a4b1122a2b8cc45a639e86206807ce0baf390ee9218d3ef181923fa4d2b67443367c491aa255c5fbaa64bb74648e3c5b48299928af86c09
+  languageName: node
+  linkType: hard
+
+"stopwords-iso@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "stopwords-iso@npm:1.1.0"
+  checksum: 10c0/e831d205c21933798288235eb081cce841285cce8e7455dcaa814819c88a9353a62e462ced8bdebb61dc1678cd2b9791640ffd00f636387fa5b8a38d3ee77d36
   languageName: node
   linkType: hard
 
