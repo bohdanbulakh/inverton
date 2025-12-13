@@ -1,19 +1,19 @@
 export interface DocumentData {
-	docId: number;
-	title: string;
-	path: string;
-}
-
-export interface PostingsList {
-	tf: number;
-	positions: Position[];
+  docId: string;
+  title: string;
+  path: string;
 }
 
 export interface Position {
   line: number;
-  start: number;
-  length: number;
+  pos: number;
+  len: number;
 }
 
-export type TermDocuments = Map<string, PostingsList>
-export type InvertedIndex = Map<string, TermDocuments>
+export interface Token extends Position {
+  term: string;
+}
+
+export interface NormalizedToken extends Token {
+  lemma: string;
+}

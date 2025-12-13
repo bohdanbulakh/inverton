@@ -1,6 +1,6 @@
 import { Writable } from 'stream';
-import { NormalizedToken } from './normalizer';
 import { RedisClient } from '../redis/client/client';
+import { NormalizedToken } from './types';
 
 export class InvertedIndexWriter extends Writable {
   private batch: NormalizedToken[] = [];

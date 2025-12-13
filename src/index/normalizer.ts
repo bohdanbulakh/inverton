@@ -1,10 +1,6 @@
 import { Transform, TransformCallback } from 'stream';
-import { Token } from './tokenizer';
 import { RedisClient } from '../redis/client/client';
-
-export interface NormalizedToken extends Token {
-  lemma: string;
-}
+import { NormalizedToken, Token } from './types';
 
 export class TermNormalizerStream extends Transform {
   private batch: Token[] = [];

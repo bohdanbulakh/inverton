@@ -1,11 +1,5 @@
 import { Transform, TransformCallback } from 'stream';
-
-export interface Token {
-  term: string;
-  line: number;
-  pos: number;
-  len: number;
-}
+import { Token } from './types';
 
 export class TokenizerStream extends Transform {
   private lineCounter = 0;
