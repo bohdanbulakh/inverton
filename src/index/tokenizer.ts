@@ -1,7 +1,9 @@
 import { Transform, TransformCallback } from 'stream';
 import { Token } from './types';
 
-export class TokenizerStream extends Transform {
+export const WORD_REGEX = /[\p{L}\p{N}_]+/gu;
+
+export class Tokenizer extends Transform {
   private lineCounter = 0;
   private wordPosCounter = 0;
 
@@ -12,7 +14,7 @@ export class TokenizerStream extends Transform {
   _transform (line: string, _encoding: string, callback: TransformCallback): void {
     this.lineCounter++;
 
-    const wordRegex = /[\p{L}\p{N}_]+/gu;
+    const wordRegex = new RegExp(WORD_REGEX.source, WORD_REGEX.flags);
 
     let match;
     while ((match = wordRegex.exec(line)) !== null) {

@@ -1,76 +1,45 @@
-import { Transform, TransformCallback } from 'stream';
-import { Token } from './types';
 import { RedisClient } from '../redis/client/client';
-import { NormalizedToken } from './types';
 
-export class TermNormalizerStream extends Transform {
-  private batch: Token[] = [];
-  private readonly batchSize = 200;
+export class Normalizer {
+  constructor (private readonly redis: RedisClient) {}
 
-  constructor (private readonly redis: RedisClient) {
-    super({ objectMode: true });
-  }
-
-  _transform (chunk: Token, _encoding: string, callback: TransformCallback): void {
-    this.batch.push(chunk);
-    if (this.batch.length >= this.batchSize) {
-      this.processBatch().then(() => callback()).catch(callback);
-    } else {
-      callback();
-    }
-  }
-
-  _flush (callback: TransformCallback): void {
-    if (this.batch.length > 0) {
-      this.processBatch().then(() => callback()).catch(callback);
-    } else {
-      callback();
-    }
-  }
-
-  private async processBatch (): Promise<void> {
-    if (this.batch.length === 0) return;
-
-    const lemmas = await this.fetchLemmas(this.batch);
+  async normalizeTerms (terms: string[]): Promise<string[]> {
+    const lemmas = await this.fetchLemmas(terms);
     const isStopWordFlags = await this.checkStopWords(lemmas);
 
-    for (let i = 0; i < this.batch.length; i++) {
+    const normalized: string[] = [];
+    for (let i = 0; i < terms.length; i++) {
       if (!isStopWordFlags[i]) {
-        const out: NormalizedToken = {
-          ...this.batch[i],
-          lemma: lemmas[i],
-        };
-        this.push(out);
+        normalized.push(lemmas[i]);
       }
     }
-
-    this.batch = [];
+    return normalized;
   }
 
-  private async fetchLemmas (tokens: Token[]): Promise<string[]> {
+  async fetchLemmas (terms: string[]): Promise<string[]> {
     const pipeline = this.redis.pipeline();
 
-    for (const token of tokens) {
-      pipeline.get(token.term.toLowerCase());
+    for (const term of terms) {
+      pipeline.get(term.toLowerCase());
     }
 
     const results = await pipeline.exec();
 
     if (!results) {
-      return tokens.map((t) => t.term.toLowerCase());
+      return terms.map((t) => t.toLowerCase());
     }
 
     return results.map((result, i) => {
       const [err, val] = result;
       if (err) {
-        console.error(`Error fetching lemma for "${tokens[i].term}":`, err);
-        return tokens[i].term.toLowerCase();
+        console.error(`Error fetching lemma for "${terms[i]}":`, err);
+        return terms[i].toLowerCase();
       }
-      return val ? (val as string) : tokens[i].term.toLowerCase();
+      return val ? (val as string) : terms[i].toLowerCase();
     });
   }
 
-  private async checkStopWords (lemmas: string[]): Promise<boolean[]> {
+  async checkStopWords (lemmas: string[]): Promise<boolean[]> {
     const pipeline = this.redis.pipeline();
 
     for (const lemma of lemmas) {

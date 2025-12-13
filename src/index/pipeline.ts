@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { pipeline } from 'stream/promises';
-import { TokenizerStream } from './tokenizer';
-import { TermNormalizerStream } from './normalizer';
+import { Tokenizer } from './tokenizer';
+import { TermNormalizerStream } from './normalizer-stream';
 import { RedisClient } from '../redis/client/client';
 import { InvertedIndexWriter } from './indexer';
 
@@ -20,7 +20,7 @@ export class IndexingService {
         crlfDelay: Infinity,
       });
 
-      const tokenizer = new TokenizerStream();
+      const tokenizer = new Tokenizer();
       const normalizer = new TermNormalizerStream(this.redisClient);
       const indexer = new InvertedIndexWriter(this.redisClient, docId);
 
