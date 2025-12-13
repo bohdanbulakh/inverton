@@ -8,8 +8,7 @@ export class InvertedIndexWriter extends Writable {
 
   constructor (
     private readonly redis: RedisClient,
-    private readonly docId: string,
-    private readonly lang: string
+    private readonly docId: string
   ) {
     super({ objectMode: true });
   }
@@ -34,7 +33,7 @@ export class InvertedIndexWriter extends Writable {
     const pipeline = this.redis.pipeline();
 
     for (const token of this.batch) {
-      const baseKey = `idx:${this.lang}:${token.lemma}`;
+      const baseKey = `idx:${token.lemma}`;
 
       pipeline.sadd(baseKey, this.docId);
 

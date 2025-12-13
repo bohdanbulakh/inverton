@@ -94,7 +94,7 @@ export class RedisClient extends Redis {
             console.log(`Started loading for language: ${langCode}`);
 
             await this.redisNormalizeService.deleteAllLemmas(langCode);
-            await this.loadLemmaToRedis(entry, langCode);
+            await this.loadLemmaToRedis(entry);
             await this.redisNormalizeService.setLemmaHash(langCode, comparedHashes.newHash);
           } catch (err) {
             console.error(`FAILED to process ${fileName}:`, err);
@@ -122,7 +122,7 @@ export class RedisClient extends Redis {
           return;
         }
 
-        const loader = new StopWordsLoader(this, langCode);
+        const loader = new StopWordsLoader(this);
 
         for (const word of words) {
           const canContinue = loader.write(word);
@@ -154,9 +154,8 @@ export class RedisClient extends Redis {
 
   private async loadLemmaToRedis (
     fileStream: Readable,
-    langCode: string,
   ): Promise<void> {
-    const lemmaLoader = new LemmaRedisLoader(this, langCode);
+    const lemmaLoader = new LemmaRedisLoader(this);
 
     const lineReader = readline.createInterface({
       input: fileStream,

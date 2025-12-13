@@ -18,12 +18,11 @@ export class LemmaRedisLoader extends RedisLoader {
       lemma !== '_' &&
       term !== lemma;
 
-    return [`${term}:${this.langCode}`, lemma, isValueValid];
+    return [term.toLowerCase(), lemma, isValueValid];
   }
 
   constructor (
     redisClient: RedisClient,
-    private readonly langCode: string,
     batchSize = 1000
   ) {
     super(redisClient, batchSize);

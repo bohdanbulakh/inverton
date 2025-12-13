@@ -9,7 +9,7 @@ import { InvertedIndexWriter } from './indexer';
 export class IndexingService {
   constructor (private readonly redisClient: RedisClient) {}
 
-  async indexFile (filePath: string, docId: string, langCode: string): Promise<void> {
+  async indexFile (filePath: string, docId: string): Promise<void> {
     console.time(`Indexing ${docId}`);
 
     try {
@@ -21,8 +21,8 @@ export class IndexingService {
       });
 
       const tokenizer = new TokenizerStream();
-      const normalizer = new TermNormalizerStream(this.redisClient, langCode);
-      const indexer = new InvertedIndexWriter(this.redisClient, docId, langCode);
+      const normalizer = new TermNormalizerStream(this.redisClient);
+      const indexer = new InvertedIndexWriter(this.redisClient, docId);
 
       await pipeline(
         lineSource,

@@ -1,15 +1,13 @@
 import { Transform, TransformCallback } from 'stream';
+import { Token } from './types';
 import { RedisClient } from '../redis/client/client';
-import { NormalizedToken, Token } from './types';
+import { NormalizedToken } from './types';
 
 export class TermNormalizerStream extends Transform {
   private batch: Token[] = [];
   private readonly batchSize = 200;
 
-  constructor (
-    private readonly redis: RedisClient,
-    private readonly lang: string
-  ) {
+  constructor (private readonly redis: RedisClient) {
     super({ objectMode: true });
   }
 
@@ -53,7 +51,7 @@ export class TermNormalizerStream extends Transform {
     const pipeline = this.redis.pipeline();
 
     for (const token of tokens) {
-      pipeline.get(`${token.term.toLowerCase()}:${this.lang}`);
+      pipeline.get(token.term.toLowerCase());
     }
 
     const results = await pipeline.exec();
@@ -76,7 +74,7 @@ export class TermNormalizerStream extends Transform {
     const pipeline = this.redis.pipeline();
 
     for (const lemma of lemmas) {
-      pipeline.get(`sw:${this.lang}:${lemma}`);
+      pipeline.get(`sw:${lemma}`);
     }
 
     const results = await pipeline.exec();
