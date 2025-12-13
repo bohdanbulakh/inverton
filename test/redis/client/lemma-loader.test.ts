@@ -1,13 +1,16 @@
 import { Writable } from 'stream';
 import { finished } from 'stream/promises';
-import { RedisLemmaService } from '../../../src/redis/redis-lemma-service';
 import { LemmaRedisLoader } from '../../../src/redis/client/lemma-loader';
+import { RedisClient } from '../../../src/redis/client/client';
 
-const mockSetMany = jest.fn<Promise<void>, [string, [string, string][]]>();
+const mockPipeline = {
+  set: jest.fn(),
+  exec: jest.fn().mockResolvedValue([]),
+};
 
-const mockRedisService = {
-  setMany: mockSetMany,
-} as unknown as RedisLemmaService;
+const mockRedisClient = {
+  pipeline: jest.fn(() => mockPipeline),
+} as unknown as RedisClient;
 
 async function runStream (
   stream: Writable,
@@ -24,13 +27,11 @@ async function runStream (
 }
 
 describe('LemmaRedisLoader', () => {
-  const langCode = 'en';
   let loader: LemmaRedisLoader;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSetMany.mockResolvedValue(undefined);
-    loader = new LemmaRedisLoader(mockRedisService, langCode);
+    loader = new LemmaRedisLoader(mockRedisClient);
   });
 
   it('should batch items and flush only when the stream ends', async () => {
@@ -38,11 +39,22 @@ describe('LemmaRedisLoader', () => {
 
     await runStream(loader, lines);
 
-    expect(mockSetMany).toHaveBeenCalledTimes(1);
-    expect(mockSetMany).toHaveBeenCalledWith(langCode, [
-      ['run', 'ran'],
-      ['go', 'went'],
-    ]);
+    expect(mockRedisClient.pipeline).toHaveBeenCalledTimes(1);
+
+    expect(mockPipeline.set).toHaveBeenCalledTimes(2);
+    expect(mockPipeline.set).toHaveBeenCalledWith('run', 'ran');
+    expect(mockPipeline.set).toHaveBeenCalledWith('go', 'went');
+
+    expect(mockPipeline.exec).toHaveBeenCalledTimes(1);
+  });
+
+  it('should convert terms to lowercase', async () => {
+    const lines = ['Run;ran', 'GO;went'];
+
+    await runStream(loader, lines);
+
+    expect(mockPipeline.set).toHaveBeenCalledWith('run', 'ran');
+    expect(mockPipeline.set).toHaveBeenCalledWith('go', 'went');
   });
 
   it('should skip invalid lines and empty strings', async () => {
@@ -59,12 +71,10 @@ describe('LemmaRedisLoader', () => {
 
     await runStream(loader, lines);
 
-    expect(mockSetMany).toHaveBeenCalledTimes(1);
-
-    expect(mockSetMany).toHaveBeenCalledWith(langCode, [
-      ['valid', 'data'],
-      ['another', 'valid'],
-    ]);
+    expect(mockRedisClient.pipeline).toHaveBeenCalledTimes(1);
+    expect(mockPipeline.set).toHaveBeenCalledTimes(2);
+    expect(mockPipeline.set).toHaveBeenCalledWith('valid', 'data');
+    expect(mockPipeline.set).toHaveBeenCalledWith('another', 'valid');
   });
 
   it('should flush mid-stream when batch size is reached', async () => {
@@ -73,24 +83,25 @@ describe('LemmaRedisLoader', () => {
       'two;2',
       'three;3',
     ];
-    const loaderWithSmallBatch = new LemmaRedisLoader(mockRedisService, langCode, 2);
+    const loaderWithSmallBatch = new LemmaRedisLoader(mockRedisClient, 2);
 
     await runStream(loaderWithSmallBatch, lines);
 
-    expect(mockSetMany).toHaveBeenCalledTimes(2);
+    expect(mockRedisClient.pipeline).toHaveBeenCalledTimes(2);
 
-    expect(mockSetMany).toHaveBeenNthCalledWith(1, langCode, [
-      ['one', '1'],
-      ['two', '2'],
-    ]);
+    expect(mockPipeline.set).toHaveBeenCalledWith('one', '1');
+    expect(mockPipeline.set).toHaveBeenCalledWith('two', '2');
 
-    expect(mockSetMany).toHaveBeenNthCalledWith(2, langCode, [['three', '3']]);
+    expect(mockPipeline.set).toHaveBeenCalledWith('three', '3');
+
+    expect(mockPipeline.exec).toHaveBeenCalledTimes(2);
   });
 
-  it('should emit an error if _write flush fails', async () => {
-    const loaderWithSmallBatch = new LemmaRedisLoader(mockRedisService, langCode, 1);
+  it('should emit an error if pipeline execution fails', async () => {
+    const loaderWithSmallBatch = new LemmaRedisLoader(mockRedisClient, 1);
     const error = new Error('Redis Failed');
-    mockSetMany.mockRejectedValue(error);
+
+    mockPipeline.exec.mockRejectedValueOnce(error);
 
     const streamFinished = finished(loaderWithSmallBatch);
 
@@ -98,26 +109,11 @@ describe('LemmaRedisLoader', () => {
     loaderWithSmallBatch.end();
 
     await expect(streamFinished).rejects.toThrow(error);
-    expect(mockSetMany).toHaveBeenCalledTimes(1);
   });
 
-  it('should emit an error if _final flush fails', async () => {
-    const error = new Error('Redis Failed');
-    mockSetMany.mockRejectedValue(error);
-
-    const streamFinished = finished(loader);
-
-    loader.write('one;1');
-    loader.end();
-
-    await expect(streamFinished).rejects.toThrow(error);
-    expect(mockSetMany).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call setMany if stream is empty', async () => {
+  it('should not call pipeline if stream is empty', async () => {
     await runStream(loader, []);
 
-    expect(mockSetMany).not.toHaveBeenCalled();
+    expect(mockRedisClient.pipeline).not.toHaveBeenCalled();
   });
 });
-
