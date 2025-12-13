@@ -5,6 +5,7 @@ import { NormalizedToken } from './types';
 export class InvertedIndexWriter extends Writable {
   private batch: NormalizedToken[] = [];
   private readonly batchSize = 200;
+  private isDocCounted = false;
 
   constructor (
     private readonly redis: RedisClient,
@@ -28,17 +29,22 @@ export class InvertedIndexWriter extends Writable {
   }
 
   private async flushBatch (): Promise<void> {
-    if (this.batch.length === 0) return;
-
     const pipeline = this.redis.pipeline();
 
-    for (const token of this.batch) {
-      const baseKey = `idx:${token.lemma}`;
+    if (!this.isDocCounted) {
+      pipeline.incr('total_docs');
+      this.isDocCounted = true;
+    }
 
-      pipeline.sadd(baseKey, this.docId);
+    if (this.batch.length > 0) {
+      for (const token of this.batch) {
+        const baseKey = `idx:${token.lemma}`;
 
-      const infoPayload = `${token.line}:${token.position}:${token.length}`;
-      pipeline.rpush(`${baseKey}:${this.docId}`, infoPayload);
+        pipeline.sadd(baseKey, this.docId);
+
+        const infoPayload = `${token.line}:${token.position}:${token.length}`;
+        pipeline.rpush(`${baseKey}:${this.docId}`, infoPayload);
+      }
     }
 
     await pipeline.exec();
