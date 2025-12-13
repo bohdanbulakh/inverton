@@ -22,8 +22,8 @@ export class TokenizerStream extends Transform {
       const token: Token = {
         term: term,
         line: this.lineCounter,
-        pos: this.wordPosCounter,
-        len: term.length,
+        position: this.wordPosCounter,
+        length: term.length,
       };
 
       this.push(token);

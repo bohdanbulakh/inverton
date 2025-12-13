@@ -1,13 +1,13 @@
 export interface DocumentData {
-  docId: string;
+  documentId: string;
   title: string;
   path: string;
 }
 
 export interface Position {
   line: number;
-  pos: number;
-  len: number;
+  position: number;
+  length: number;
 }
 
 export interface Token extends Position {

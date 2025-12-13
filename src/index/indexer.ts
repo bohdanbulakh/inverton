@@ -38,7 +38,7 @@ export class InvertedIndexWriter extends Writable {
 
       pipeline.sadd(baseKey, this.docId);
 
-      const infoPayload = `${token.line}:${token.pos}:${token.len}`;
+      const infoPayload = `${token.line}:${token.position}:${token.length}`;
       pipeline.rpush(`${baseKey}:${this.docId}`, infoPayload);
     }
 
