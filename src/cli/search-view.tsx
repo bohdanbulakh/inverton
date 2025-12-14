@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Spacer, Text, useInput } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import { Input } from './input';
 import { SearchEngine } from '../search/search-engine';
 import { SearchResult } from '../search/types';
@@ -35,7 +35,7 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
 
   return (
     <Box flexDirection="column" height="100%" width="100%">
-      <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1}>
+      <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1} width="100%">
         <Text bold>Search Engine (Tab to Browse Files)</Text>
       </Box>
 
@@ -47,7 +47,7 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
         placeholder="Enter search terms..."
       />
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1} flexDirection="column" width="100%">
         {loading && <Text>Searching...</Text>}
 
         {!loading && results.length === 0 && query && (
@@ -55,10 +55,9 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
         )}
 
         {results.map((res, idx) => (
-          <Box key={idx} borderStyle="single" paddingX={1} marginBottom={1} flexDirection="column">
+          <Box key={idx} borderStyle="single" paddingX={1} marginBottom={1} flexDirection="column" width="100%">
             <Box justifyContent="space-between">
               <Text bold color="cyan">{res.path}</Text>
-              <Spacer/>
               <Text color="yellow">Score: {res.score.toFixed(4)}</Text>
             </Box>
             <Text color="gray">ID: {res.docId}</Text>

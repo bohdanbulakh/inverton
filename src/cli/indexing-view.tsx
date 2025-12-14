@@ -23,19 +23,24 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const [offset, setOffset] = useState(0);
 
   const { stdout } = useStdout();
-  const [windowHeight, setWindowHeight] = useState(stdout.rows);
+  const [rows, setRows] = useState(stdout?.rows || 24);
 
-  const VISIBLE_ITEMS = Math.max(5, windowHeight - 8);
+  const VISIBLE_ITEMS = Math.max(1, rows - 12);
 
   useEffect(() => {
-    const onResize = () => {
-      setWindowHeight(stdout.rows);
-    };
+    if (!stdout) return;
+    const onResize = () => setRows(stdout.rows);
     stdout.on('resize', onResize);
     return () => {
       stdout.off('resize', onResize);
     };
   }, [stdout]);
+
+  useEffect(() => {
+    if (selectedIndex >= offset + VISIBLE_ITEMS) {
+      setOffset(Math.max(0, selectedIndex - VISIBLE_ITEMS + 1));
+    }
+  }, [VISIBLE_ITEMS, selectedIndex, offset]);
 
   useEffect(() => {
     loadDirectory(cwd);
@@ -49,14 +54,8 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
         let isDir = false;
         try {
           isDir = fs.statSync(fullPath).isDirectory();
-        } catch {
-          // ignore inaccessible files
-        }
-        return {
-          label: isDir ? `[DIR] ${file}` : file,
-          value: fullPath,
-          isDir,
-        };
+        } catch {}
+        return { label: isDir ? `[DIR] ${file}` : file, value: fullPath, isDir };
       });
 
       fileItems.sort((a, b) => {
@@ -81,7 +80,6 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const handleSelect = () => {
     const item = items[selectedIndex];
     if (!item) return;
-
     if (item.isDir) {
       setCwd(item.value);
     } else {
@@ -93,54 +91,40 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
 
   useInput((input, key) => {
     if (key.tab) {
-      onNavigate('search');
-      return;
+      onNavigate('search'); return;
     }
-
     if (key.upArrow) {
       const newIndex = Math.max(0, selectedIndex - 1);
       setSelectedIndex(newIndex);
-      if (newIndex < offset) {
-        setOffset(newIndex);
-      }
+      if (newIndex < offset) setOffset(newIndex);
     }
-
     if (key.downArrow) {
       const newIndex = Math.min(items.length - 1, selectedIndex + 1);
       setSelectedIndex(newIndex);
-      if (newIndex >= offset + VISIBLE_ITEMS) {
-        setOffset(newIndex - VISIBLE_ITEMS + 1);
-      }
+      if (newIndex >= offset + VISIBLE_ITEMS) setOffset(newIndex - VISIBLE_ITEMS + 1);
     }
-
-    if (key.return) {
-      handleSelect();
-    }
+    if (key.return) handleSelect();
   });
 
   return (
-    <Box flexDirection="column" height="100%">
-      <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1}>
+    <Box flexDirection="column" height="100%" width="100%">
+      <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1} width="100%">
         <Text bold>File Browser (Press Enter to Index, Tab to Search)</Text>
       </Box>
-
-      <Box paddingX={1} marginBottom={1}>
+      <Box paddingX={1} marginBottom={1} width="100%">
         <Text color="yellow">Current Dir: {cwd}</Text>
       </Box>
-
       {message && (
-        <Box paddingX={1} marginBottom={1}>
+        <Box paddingX={1} marginBottom={1} width="100%">
           <Text color="green">{message}</Text>
         </Box>
       )}
-
-      <Box flexDirection="column" flexGrow={1}>
+      <Box flexDirection="column" flexGrow={1} width="100%">
         {items.slice(offset, offset + VISIBLE_ITEMS).map((item, index) => {
           const actualIndex = offset + index;
           const isSelected = actualIndex === selectedIndex;
-
           return (
-            <Box key={item.value + actualIndex}>
+            <Box key={item.value + actualIndex} width="100%">
               <Text color={isSelected ? 'green' : 'white'} bold={isSelected}>
                 {isSelected ? '> ' : '  '}
                 {item.label}

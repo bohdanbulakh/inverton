@@ -21,22 +21,27 @@ export const App: React.FC<Props> = ({ queue, searchEngine }) => {
     const onStats = (newStats: QueueStats) => setStats({ ...newStats });
     queue.on('stats', onStats);
 
-    const onResize = () => setResizeTick((t) => t + 1);
-    stdout.on('resize', onResize);
-
-    return () => {
-      queue.off('stats', onStats);
-      stdout.off('resize', onResize);
-    };
+    if (stdout) {
+      const onResize = () => {
+        setResizeTick((t) => t + 1);
+      };
+      stdout.on('resize', onResize);
+      return () => {
+        queue.off('stats', onStats);
+        stdout.off('resize', onResize);
+      };
+    } else {
+      return () => queue.off('stats', onStats);
+    }
   }, [queue, stdout]);
 
   return (
-    <Box flexDirection="column" height={stdout.rows - 1}>
-      <Box flexGrow={1}>
+    <Box flexDirection="column" height="100%" width="100%">
+      <Box flexGrow={1} width="100%">
         {view === 'index' ? (
-          <IndexingView queue={queue} onNavigate={setView} />
+          <IndexingView key="index" queue={queue} onNavigate={setView} />
         ) : (
-          <SearchView searchEngine={searchEngine} onNavigate={setView} />
+          <SearchView key="search" searchEngine={searchEngine} onNavigate={setView} />
         )}
       </Box>
       <StatusBar stats={stats} />
