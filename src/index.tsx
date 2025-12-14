@@ -19,11 +19,11 @@ redisClient.ready().then(() => {
   console.clear();
 
   const indexingService = new IndexingService(redisClient);
-  const queue = new IndexingQueue(indexingService, 5); // Concurrency 5
+  const queue = new IndexingQueue(indexingService, 5);
   const searchEngine = new SearchEngine(redisClient);
 
-  render(<App queue={queue} searchEngine={searchEngine} />);
-}).catch(err => {
+  render(<App queue={queue} searchEngine={searchEngine} />, { patchConsole: false });
+}).catch((err) => {
   console.error('Failed to initialize:', err);
   process.exit(1);
 });

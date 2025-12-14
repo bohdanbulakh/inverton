@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,13 +23,15 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const [offset, setOffset] = useState(0);
 
   const { stdout } = useStdout();
-  const [rows, setRows] = useState(stdout?.rows || 24);
+  const [windowHeight, setWindowHeight] = useState(stdout?.rows || 24);
 
-  const VISIBLE_ITEMS = Math.max(1, rows - 12);
+  const VISIBLE_ITEMS = Math.max(1, windowHeight - 12);
 
   useEffect(() => {
     if (!stdout) return;
-    const onResize = () => setRows(stdout.rows);
+    const onResize = () => {
+      setWindowHeight(stdout.rows);
+    };
     stdout.on('resize', onResize);
     return () => {
       stdout.off('resize', onResize);
@@ -37,14 +39,16 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   }, [stdout]);
 
   useEffect(() => {
-    if (selectedIndex >= offset + VISIBLE_ITEMS) {
-      setOffset(Math.max(0, selectedIndex - VISIBLE_ITEMS + 1));
-    }
-  }, [VISIBLE_ITEMS, selectedIndex, offset]);
-
-  useEffect(() => {
     loadDirectory(cwd);
   }, [cwd]);
+
+  useEffect(() => {
+    if (selectedIndex >= offset + VISIBLE_ITEMS) {
+      setOffset(Math.max(0, selectedIndex - VISIBLE_ITEMS + 1));
+    } else if (selectedIndex < offset) {
+      setOffset(selectedIndex);
+    }
+  }, [selectedIndex, offset, VISIBLE_ITEMS]);
 
   const loadDirectory = (dir: string) => {
     try {
@@ -80,6 +84,7 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const handleSelect = () => {
     const item = items[selectedIndex];
     if (!item) return;
+
     if (item.isDir) {
       setCwd(item.value);
     } else {
@@ -89,26 +94,37 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
     }
   };
 
-  useInput((input, key) => {
+  const handleReturnToParent = useCallback(() => {
+    const [parent] = items.filter((file) => file.isDir && file.label === '..');
+
+    if (parent) {
+      setCwd(parent.value);
+    }
+  }, [items]);
+
+  useInput((_input, key) => {
     if (key.tab) {
       onNavigate('search'); return;
     }
     if (key.upArrow) {
-      const newIndex = Math.max(0, selectedIndex - 1);
-      setSelectedIndex(newIndex);
-      if (newIndex < offset) setOffset(newIndex);
+      setSelectedIndex(Math.max(0, selectedIndex - 1));
     }
     if (key.downArrow) {
-      const newIndex = Math.min(items.length - 1, selectedIndex + 1);
-      setSelectedIndex(newIndex);
-      if (newIndex >= offset + VISIBLE_ITEMS) setOffset(newIndex - VISIBLE_ITEMS + 1);
+      setSelectedIndex(Math.min(items.length - 1, selectedIndex + 1));
     }
-    if (key.return) handleSelect();
+    if (key.leftArrow) {
+      handleReturnToParent();
+    }
+    if (key.return || key.rightArrow) {
+      handleSelect();
+    }
   });
 
+  const visibleItems = items.slice(offset, offset + VISIBLE_ITEMS);
+
   return (
-    <Box flexDirection="column" height="100%" width="100%">
-      <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1} width="100%">
+    <Box flexDirection="column" flexGrow={1}>
+      <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1}>
         <Text bold>File Browser (Press Enter to Index, Tab to Search)</Text>
       </Box>
       <Box paddingX={1} marginBottom={1} width="100%">
@@ -120,19 +136,20 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
         </Box>
       )}
       <Box flexDirection="column" flexGrow={1} width="100%">
-        {items.slice(offset, offset + VISIBLE_ITEMS).map((item, index) => {
+        {visibleItems.length > 0 ? visibleItems.map((item, index) => {
           const actualIndex = offset + index;
           const isSelected = actualIndex === selectedIndex;
           return (
             <Box key={item.value + actualIndex} width="100%">
-              <Text color={isSelected ? 'green' : 'white'} bold={isSelected}>
+              <Text color={isSelected ? 'green' : 'white'} bold={isSelected} wrap="truncate-end">
                 {isSelected ? '> ' : '  '}
                 {item.label}
               </Text>
             </Box>
           );
-        })}
-        {items.length === 0 && <Text color="gray">Directory is empty</Text>}
+        }) : (
+          <Text color="gray">Directory is empty</Text>
+        )}
       </Box>
     </Box>
   );
