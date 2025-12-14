@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { pipeline } from 'stream/promises';
-import { Tokenizer } from './tokenizer';
-import { TermNormalizerStream } from './normalizer-stream';
 import { RedisClient } from '../redis/client/client';
 import { InvertedIndexWriter } from './indexer';
+import { TermNormalizerStream } from './normalizer-stream';
+import { Tokenizer } from './tokenizer';
 
 export class IndexingService {
   constructor (private readonly redisClient: RedisClient) {}
@@ -13,6 +13,8 @@ export class IndexingService {
     console.time(`Indexing ${docId}`);
 
     try {
+      await this.redisClient.set(`doc:${docId}:path`, filePath);
+
       const fileStream = fs.createReadStream(filePath, { encoding: 'utf8' });
 
       const lineSource = readline.createInterface({

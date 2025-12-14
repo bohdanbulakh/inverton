@@ -1,8 +1,7 @@
 import { RedisClient } from '../redis/client/client';
 import { SearchResult, SearchOptions } from './types';
-import { Normalizer } from '../index/normalizer';
-
 import { WORD_REGEX } from '../index/tokenizer';
+import { Normalizer } from '../index/normalizer';
 
 export class SearchEngine {
   private readonly normalizer: Normalizer;
@@ -39,15 +38,27 @@ export class SearchEngine {
       }
     }
 
-    const results: SearchResult[] = Array.from(docScores.entries())
-      .map(([docId, score]) => ({ docId, score }))
-      .sort((a, b) => b.score - a.score);
+    const sortedDocs = Array.from(docScores.entries())
+      .sort((a, b) => b[1] - a[1]);
 
-    if (options.limit) {
-      return results.slice(0, options.limit);
+    const results: SearchResult[] = [];
+    const limit = options.limit || sortedDocs.length;
+
+    for (let i = 0; i < Math.min(sortedDocs.length, limit); i++) {
+      const [docId, score] = sortedDocs[i];
+      const path = await this.getDocPath(docId);
+      results.push({
+        docId,
+        path: path || 'Unknown Path',
+        score,
+      });
     }
 
     return results;
+  }
+
+  private async getDocPath (docId: string): Promise<string | null> {
+    return this.redisClient.get(`doc:${docId}:path`);
   }
 
   private async getDocIdsForTerm (lemma: string): Promise<string[]> {

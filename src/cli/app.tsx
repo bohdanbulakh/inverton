@@ -24,7 +24,7 @@ export const App: React.FC<Props> = ({ queue, searchEngine }) => {
   }, [queue]);
 
   return (
-    <Box flexDirection="column" height={20}>
+    <Box flexDirection="column">
       <Box flexGrow={1}>
         {view === 'index' ? (
           <IndexingView queue={queue} onNavigate={setView} />

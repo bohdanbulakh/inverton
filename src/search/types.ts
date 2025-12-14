@@ -1,5 +1,6 @@
 export interface SearchResult {
   docId: string;
+  path: string;
   score: number;
 }
 

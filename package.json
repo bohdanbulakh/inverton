@@ -2,7 +2,7 @@
   "name": "inverton",
   "version": "0.0.0",
   "license": "MIT",
-  "bin": "dist/cli/index.js",
+  "bin": "src/cli/index.tsx",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -10,12 +10,11 @@
   "scripts": {
     "build": "tsc",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "dev": "tsc --watch",
-    "start": "yarn build && node dist/cli/index.js",
-    "start:ts": "node --loader ts-node/esm src/cli/index.tsx"
+    "dev": "node --loader ts-node/esm src/index.tsx",
+    "start": "node --loader ts-node/esm src/index.tsx"
   },
   "files": [
-    "dist"
+    "src"
   ],
   "dependencies": {
     "ink": "^4.1.0",

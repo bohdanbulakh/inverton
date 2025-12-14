@@ -9,8 +9,11 @@ import * as unzipper from 'unzipper';
 import { Readable } from 'stream';
 import { AsyncQueue } from '../../async';
 import * as constants from 'node:constants';
-import * as stopWordsIso from 'stopwords-iso';
 import { StopWordsLoader } from './stopwords-loader';
+
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const stopWordsIso = require('stopwords-iso');
 
 export class RedisClient extends Redis {
   private readonly redisNormalizeService: RedisLemmaService;

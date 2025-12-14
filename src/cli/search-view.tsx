@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
+import { Box, Spacer, Text, useInput } from 'ink';
+import { Input } from './input';
 import { SearchEngine } from '../search/search-engine';
 import { SearchResult } from '../search/types';
-import { Input } from './input';
 
 interface Props {
   searchEngine: SearchEngine;
@@ -34,7 +34,7 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
   };
 
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column" height="100%" width="100%">
       <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1}>
         <Text bold>Search Engine (Tab to Browse Files)</Text>
       </Box>
@@ -57,10 +57,11 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
         {results.map((res, idx) => (
           <Box key={idx} borderStyle="single" paddingX={1} marginBottom={1} flexDirection="column">
             <Box justifyContent="space-between">
-              <Text bold color="cyan">{res.docId}</Text>
+              <Text bold color="cyan">{res.path}</Text>
+              <Spacer/>
               <Text color="yellow">Score: {res.score.toFixed(4)}</Text>
             </Box>
-            <Text>Match found in document.</Text>
+            <Text color="gray">ID: {res.docId}</Text>
           </Box>
         ))}
       </Box>
