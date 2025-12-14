@@ -1,7 +1,7 @@
 import { Transform, TransformCallback } from 'stream';
-import { Token } from './types';
-import { RedisClient } from '../redis/client/client';
-import { NormalizedToken } from './types';
+import { Token } from '../types';
+import { RedisClient } from '../../redis/client/client';
+import { NormalizedToken } from '../types';
 import { Normalizer } from './normalizer';
 
 export class TermNormalizerStream extends Transform {

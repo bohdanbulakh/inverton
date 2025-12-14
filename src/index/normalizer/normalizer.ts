@@ -1,4 +1,4 @@
-import { RedisClient } from '../redis/client/client';
+import { RedisClient } from '../../redis/client/client';
 
 export class Normalizer {
   constructor (private readonly redis: RedisClient) {}

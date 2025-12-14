@@ -1,9 +1,9 @@
 import { RedisClient } from '../redis/client/client';
 import { SearchResult, SearchOptions, SearchMode } from './types';
-import { WORD_REGEX } from '../index/tokenizer';
 import { Normalizer } from '../index/normalizer';
 import { RedisDocumentInfoService } from './document-info/document-info-service';
 import { searchBoolean, searchKeyword, searchPhrase, SearchStrategy } from './strategies';
+import { tokenize } from '../index/tokenizer';
 
 export class SearchEngine {
   private readonly normalizer: Normalizer;
@@ -24,10 +24,12 @@ export class SearchEngine {
     };
 
   async search (query: string, options: SearchOptions): Promise<SearchResult[]> {
-    const rawTerms = query.match(WORD_REGEX) || [];
+    const rawTerms = tokenize(query);
     const terms = await this.normalizer.normalizeTerms(rawTerms);
 
-    if (terms.length === 0) return [];
+    if (terms.length === 0) {
+      return [];
+    }
 
     const mode = options.mode ?? SearchMode.Keyword;
 
