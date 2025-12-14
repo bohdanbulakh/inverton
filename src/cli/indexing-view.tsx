@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput } from 'ink';
+import { Box, Text, useInput, useStdout } from 'ink';
 import * as fs from 'fs';
 import * as path from 'path';
 import { IndexingQueue } from '../index/indexing-queue';
@@ -20,9 +20,22 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const [items, setItems] = useState<FileItem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [message, setMessage] = useState('');
-
   const [offset, setOffset] = useState(0);
-  const VISIBLE_ITEMS = 10;
+
+  const { stdout } = useStdout();
+  const [windowHeight, setWindowHeight] = useState(stdout.rows);
+
+  const VISIBLE_ITEMS = Math.max(5, windowHeight - 8);
+
+  useEffect(() => {
+    const onResize = () => {
+      setWindowHeight(stdout.rows);
+    };
+    stdout.on('resize', onResize);
+    return () => {
+      stdout.off('resize', onResize);
+    };
+  }, [stdout]);
 
   useEffect(() => {
     loadDirectory(cwd);
@@ -46,7 +59,6 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
         };
       });
 
-      // Sort: Directories first, then files
       fileItems.sort((a, b) => {
         if (a.isDir && !b.isDir) return -1;
         if (!a.isDir && b.isDir) return 1;
@@ -86,18 +98,18 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
     }
 
     if (key.upArrow) {
-      setSelectedIndex(Math.max(0, selectedIndex - 1));
-
-      if (selectedIndex - 1 < offset) {
-        setOffset((oldOffset) => Math.max(0, oldOffset - 1));
+      const newIndex = Math.max(0, selectedIndex - 1);
+      setSelectedIndex(newIndex);
+      if (newIndex < offset) {
+        setOffset(newIndex);
       }
     }
 
     if (key.downArrow) {
-      setSelectedIndex(Math.min(items.length - 1, selectedIndex + 1));
-
-      if (selectedIndex + 1 >= offset + VISIBLE_ITEMS) {
-        setOffset((oldOffset) => oldOffset + 1);
+      const newIndex = Math.min(items.length - 1, selectedIndex + 1);
+      setSelectedIndex(newIndex);
+      if (newIndex >= offset + VISIBLE_ITEMS) {
+        setOffset(newIndex - VISIBLE_ITEMS + 1);
       }
     }
 
@@ -128,7 +140,7 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
           const isSelected = actualIndex === selectedIndex;
 
           return (
-            <Box key={item.value + index}>
+            <Box key={item.value + actualIndex}>
               <Text color={isSelected ? 'green' : 'white'} bold={isSelected}>
                 {isSelected ? '> ' : '  '}
                 {item.label}

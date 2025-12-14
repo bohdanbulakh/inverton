@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box } from 'ink';
+import { Box, useStdout } from 'ink';
 import { SearchEngine } from '../search/search-engine';
 import { IndexingQueue, QueueStats } from '../index/indexing-queue';
 import { IndexingView } from './indexing-view';
@@ -14,17 +14,24 @@ interface Props {
 export const App: React.FC<Props> = ({ queue, searchEngine }) => {
   const [view, setView] = useState<'index' | 'search'>('index');
   const [stats, setStats] = useState<QueueStats>(queue.getStats());
+  const { stdout } = useStdout();
+  const [, setResizeTick] = useState(0);
 
   useEffect(() => {
     const onStats = (newStats: QueueStats) => setStats({ ...newStats });
     queue.on('stats', onStats);
+
+    const onResize = () => setResizeTick((t) => t + 1);
+    stdout.on('resize', onResize);
+
     return () => {
       queue.off('stats', onStats);
+      stdout.off('resize', onResize);
     };
-  }, [queue]);
+  }, [queue, stdout]);
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" height={stdout.rows - 1}>
       <Box flexGrow={1}>
         {view === 'index' ? (
           <IndexingView queue={queue} onNavigate={setView} />
