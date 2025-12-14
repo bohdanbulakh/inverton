@@ -1901,6 +1901,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"arr-rotate@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "arr-rotate@npm:1.0.0"
+  checksum: 10c0/f0fe35c373c10b9140e0ac4f8a8194904c7ec2bd7919c1cf713941af994450750afb66c8f001113023fcb4fcf5ff7591e88f6286bd4bcc500bc622f9d740d6e3
+  languageName: node
+  linkType: hard
+
 "array-buffer-byte-length@npm:^1.0.1, array-buffer-byte-length@npm:^1.0.2":
   version: 1.0.2
   resolution: "array-buffer-byte-length@npm:1.0.2"
@@ -2559,6 +2566,13 @@ __metadata:
   dependencies:
     restore-cursor: "npm:^4.0.0"
   checksum: 10c0/e776e8c3c6727300d0539b0d25160b2bb56aed1a63942753ba1826b012f337a6f4b7ace3548402e4f2f13b5e16bfd751be672c44b203205e7eca8be94afec42c
+  languageName: node
+  linkType: hard
+
+"cli-spinners@npm:^2.7.0":
+  version: 2.9.2
+  resolution: "cli-spinners@npm:2.9.2"
+  checksum: 10c0/907a1c227ddf0d7a101e7ab8b300affc742ead4b4ebe920a5bf1bc6d45dce2958fcd195eb28fa25275062fe6fa9b109b93b63bc8033396ed3bcb50297008b3a3
   languageName: node
   linkType: hard
 
@@ -4587,6 +4601,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ink-select-input@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "ink-select-input@npm:5.0.0"
+  dependencies:
+    arr-rotate: "npm:^1.0.0"
+    figures: "npm:^5.0.0"
+    lodash.isequal: "npm:^4.5.0"
+  peerDependencies:
+    ink: ^4.0.0
+    react: ^18.0.0
+  checksum: 10c0/2633d4accc0b91cfe9cc7171724b2355992c28e673c156d12bcb77fc629d9fd0d5616036c944af24b130c354c356152beacc06091c26409d347a0845a29fdfc7
+  languageName: node
+  linkType: hard
+
+"ink-spinner@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "ink-spinner@npm:5.0.0"
+  dependencies:
+    cli-spinners: "npm:^2.7.0"
+  peerDependencies:
+    ink: ">=4.0.0"
+    react: ">=18.0.0"
+  checksum: 10c0/47b0201bc8b0b1fb475a6f8a117d5a099dde6f7ee2439b547ec60511e8460095ae6e78e8d34a7b8e54cb4c69def4310ce3649467c98ac8540d3c49ad030dd014
+  languageName: node
+  linkType: hard
+
+"ink-table@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "ink-table@npm:3.1.0"
+  dependencies:
+    object-hash: "npm:^2.0.3"
+  peerDependencies:
+    ink: ">=3.0.0"
+    react: ">=16.8.0"
+  checksum: 10c0/580fb64fc50f26c2e6f316c26d7d87824410b77a82c18075b47b2845c0d9a87dc98ba2ce90337bd52b2f21549c407eaa431a436b510756e75859aab265b2e313
+  languageName: node
+  linkType: hard
+
 "ink-testing-library@npm:^3.0.0":
   version: 3.0.0
   resolution: "ink-testing-library@npm:3.0.0"
@@ -4596,6 +4648,19 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/b1b98ba50c8dc00b7e2e29ab7e508770d448584af7ae2c9b71939ede28884d2d4a9b7e47c2cdeab97acb0ac5c50948b6a5e435263920b8b4b99df5159b0a5b35
+  languageName: node
+  linkType: hard
+
+"ink-text-input@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "ink-text-input@npm:5.0.1"
+  dependencies:
+    chalk: "npm:^5.2.0"
+    type-fest: "npm:^3.6.1"
+  peerDependencies:
+    ink: ^4.0.0
+    react: ^18.0.0
+  checksum: 10c0/2dc20518c438c09e4cd3ba0b0d68bf7d5ddad309ad74d9969ee7f5677974a3b962ecc3ac1e6ab9ef852b2197e775c0cd5d49f1bd5a6ef89824e08ebaabae29d2
   languageName: node
   linkType: hard
 
@@ -4681,7 +4746,11 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^4.6.0"
     eslint-plugin-unused-imports: "npm:^4.3.0"
     ink: "npm:^4.1.0"
+    ink-select-input: "npm:^5.0.0"
+    ink-spinner: "npm:^5.0.0"
+    ink-table: "npm:^3.0.0"
     ink-testing-library: "npm:^3.0.0"
+    ink-text-input: "npm:^5.0.0"
     ioredis: "npm:^5.8.1"
     jest: "npm:^30.2.0"
     meow: "npm:^11.0.0"
@@ -4695,7 +4764,7 @@ __metadata:
     unzipper: "npm:^0.12.3"
     xo: "npm:^0.53.1"
   bin:
-    inverton: dist/cli.js
+    inverton: dist/cli/index.js
   languageName: unknown
   linkType: soft
 
@@ -5968,6 +6037,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.isequal@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "lodash.isequal@npm:4.5.0"
+  checksum: 10c0/dfdb2356db19631a4b445d5f37868a095e2402292d59539a987f134a8778c62a2810c2452d11ae9e6dcac71fc9de40a6fedcb20e2952a15b431ad8b29e50e28f
+  languageName: node
+  linkType: hard
+
 "lodash.memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "lodash.memoize@npm:4.1.2"
@@ -6501,6 +6577,13 @@ __metadata:
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: 10c0/1f4df9945120325d041ccf7b86f31e8bcc14e73d29171e37a7903050e96b81323784ec59f93f102ec635bcf6fa8034ba3ea0a8c7e69fa202b87ae3b6cec5a414
+  languageName: node
+  linkType: hard
+
+"object-hash@npm:^2.0.3":
+  version: 2.2.0
+  resolution: "object-hash@npm:2.2.0"
+  checksum: 10c0/1527de843926c5442ed61f8bdddfc7dc181b6497f725b0e89fcf50a55d9c803088763ed447cac85a5aa65345f1e99c2469ba679a54349ef3c4c0aeaa396a3eb9
   languageName: node
   linkType: hard
 
@@ -8263,7 +8346,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^3.1.0":
+"type-fest@npm:^3.1.0, type-fest@npm:^3.6.1":
   version: 3.13.1
   resolution: "type-fest@npm:3.13.1"
   checksum: 10c0/547d22186f73a8c04590b70dcf63baff390078c75ea8acd366bbd510fd0646e348bd1970e47ecf795b7cff0b41d26e9c475c1fedd6ef5c45c82075fbf916b629

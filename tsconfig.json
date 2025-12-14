@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "es2021",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2022",
     "esModuleInterop": true,
     "outDir": "dist",
     "baseUrl": ".",
@@ -13,6 +13,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "preserveSymlinks": true,
+    "jsx": "react"
   },
   "include": ["src"]
 }
