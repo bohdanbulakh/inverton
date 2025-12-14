@@ -2,8 +2,8 @@ import { RedisClient } from '../redis/client/client';
 import { SearchResult, SearchOptions, SearchMode } from './types';
 import { WORD_REGEX } from '../index/tokenizer';
 import { Normalizer } from '../index/normalizer';
-import { RedisDocumentInfoService } from './document-info-service';
-import { searchBoolean, searchKeyword, searchPhrase } from './strategies';
+import { RedisDocumentInfoService } from './document-info/document-info-service';
+import { searchBoolean, searchKeyword, searchPhrase, SearchStrategy } from './strategies';
 
 export class SearchEngine {
   private readonly normalizer: Normalizer;
@@ -16,7 +16,7 @@ export class SearchEngine {
 
   private searchStrategies: Record<
     SearchMode,
-    (terms: string[], docInfoService: RedisDocumentInfoService) => Promise<Map<string, number>>
+    SearchStrategy
   > = {
       [SearchMode.Keyword]: searchKeyword,
       [SearchMode.Phrase]: searchPhrase,

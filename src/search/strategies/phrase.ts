@@ -1,6 +1,7 @@
-import { DocumentInfoService } from '../document-info-service';
+import { DocumentInfoService } from '../document-info/document-info.interface';
+import { SearchStrategy } from '.';
 
-export const searchPhrase = async (
+export const searchPhrase: SearchStrategy = async (
   terms: string[],
   searchService: DocumentInfoService,
 ): Promise<Map<string, number>> => {
