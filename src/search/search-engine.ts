@@ -1,76 +1,50 @@
 import { RedisClient } from '../redis/client/client';
-import { SearchResult, SearchOptions } from './types';
+import { SearchResult, SearchOptions, SearchMode } from './types';
 import { WORD_REGEX } from '../index/tokenizer';
 import { Normalizer } from '../index/normalizer';
+import { RedisDocumentInfoService } from './document-info-service';
+import { searchBoolean, searchKeyword, searchPhrase } from './strategies';
 
 export class SearchEngine {
   private readonly normalizer: Normalizer;
+  private readonly redisDocumentInfoService;
 
   constructor (private readonly redisClient: RedisClient) {
     this.normalizer = new Normalizer(redisClient);
+    this.redisDocumentInfoService = new RedisDocumentInfoService(redisClient);
   }
+
+  private searchStrategies: Record<
+    SearchMode,
+    (terms: string[], docInfoService: RedisDocumentInfoService) => Promise<Map<string, number>>
+  > = {
+      [SearchMode.Keyword]: searchKeyword,
+      [SearchMode.Phrase]: searchPhrase,
+      [SearchMode.Boolean]: searchBoolean,
+    };
 
   async search (query: string, options: SearchOptions): Promise<SearchResult[]> {
     const rawTerms = query.match(WORD_REGEX) || [];
-    if (rawTerms.length === 0) {
-      return [];
-    }
-
     const terms = await this.normalizer.normalizeTerms(rawTerms);
-    if (terms.length === 0) {
-      return [];
-    }
 
-    const docScores = new Map<string, number>();
-    const totalDocs = await this.getTotalDocuments();
+    if (terms.length === 0) return [];
 
-    for (const lemma of terms) {
-      const docIds = await this.getDocIdsForTerm(lemma);
-      if (docIds.length === 0) continue;
+    const mode = options.mode ?? SearchMode.Keyword;
 
-      const idf = Math.log10(totalDocs / docIds.length);
+    const docScores = await this.searchStrategies[mode](terms, this.redisDocumentInfoService);
+    return this.formatResults(docScores, options.limit);
+  }
 
-      for (const docId of docIds) {
-        const tf = await this.getTermFrequency(lemma, docId);
-        const score = tf * idf;
-        const currentScore = docScores.get(docId) || 0;
-        docScores.set(docId, currentScore + score);
-      }
-    }
-
-    const sortedDocs = Array.from(docScores.entries())
-      .sort((a, b) => b[1] - a[1]);
-
+  private async formatResults (docScores: Map<string, number>, limit: number | null): Promise<SearchResult[]> {
+    const sortedDocs = Array.from(docScores.entries()).sort((a, b) => b[1] - a[1]);
     const results: SearchResult[] = [];
-    const limit = options.limit || sortedDocs.length;
+    const finalLimit = limit || sortedDocs.length;
 
-    for (let i = 0; i < Math.min(sortedDocs.length, limit); i++) {
+    for (let i = 0; i < Math.min(sortedDocs.length, finalLimit); i++) {
       const [docId, score] = sortedDocs[i];
-      const path = await this.getDocPath(docId);
-      results.push({
-        docId,
-        path: path || 'Unknown Path',
-        score,
-      });
+      const path = await this.redisClient.get(`doc:${docId}:path`);
+      results.push({ docId, path: path || 'Unknown', score });
     }
-
     return results;
-  }
-
-  private async getDocPath (docId: string): Promise<string | null> {
-    return this.redisClient.get(`doc:${docId}:path`);
-  }
-
-  private async getDocIdsForTerm (lemma: string): Promise<string[]> {
-    return this.redisClient.smembers(`idx:${lemma}`);
-  }
-
-  private async getTermFrequency (lemma: string, docId: string): Promise<number> {
-    return this.redisClient.llen(`idx:${lemma}:${docId}`);
-  }
-
-  private async getTotalDocuments (): Promise<number> {
-    const count = await this.redisClient.get('total_docs');
-    return count ? parseInt(count, 10) : 1;
   }
 }
