@@ -4764,7 +4764,7 @@ __metadata:
     unzipper: "npm:^0.12.3"
     xo: "npm:^0.53.1"
   bin:
-    inverton: dist/cli/index.js
+    inverton: src/cli/index.tsx
   languageName: unknown
   linkType: soft
 
