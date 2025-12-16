@@ -34,17 +34,14 @@ const IndexCommand = () => {
     const redis = new RedisClient({ port: 6379, host: 'localhost' }, 20, archivePath);
 
     redis.ready().then(() => {
-      // Default concurrency 5 for the index command session
       const service = new IndexingService(redis);
       const q = new IndexingQueue(service, 5);
       setQueue(q);
       setReady(true);
 
-      // Handle CLI Argument Mode
       if (cli.flags.file) {
         const targetPath = path.resolve(process.cwd(), cli.flags.file);
         q.enqueue(targetPath);
-        // In CLI mode, we wait for queue to drain then exit
         const checkDone = setInterval(() => {
           const stats = q.getStats();
           if (stats.active === 0 && stats.processed + stats.failed >= stats.total) {
@@ -60,12 +57,10 @@ const IndexCommand = () => {
   if (initError) return <Text color="red">Error: {initError}</Text>;
   if (!ready || !queue) return <Text>Initializing...</Text>;
 
-  // If CLI arg provided, we render a simple status while the useEffect handles logic
   if (cli.flags.file) {
     return <Text>Indexing {cli.flags.file}...</Text>;
   }
 
-  // Otherwise, File Browser TUI
   return (
     <IndexingView
       queue={queue}

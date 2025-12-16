@@ -15,10 +15,8 @@ interface Props {
 }
 
 export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNavigate }) => {
-  // UI State
   const [viewState, setViewState] = useState<'input' | 'results'>('input');
 
-  // Search State
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,11 +24,10 @@ export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNa
   const [activeElement, setActiveElement] = useState<'mode' | 'input'>('input');
   const [error, setError] = useState<string | null>(null);
 
-  // Terms for highlighting
   const [searchTerms, setSearchTerms] = useState<string[]>([]);
 
   useInput((_input, key) => {
-    if (viewState === 'results') return; // Let SearchResultsLayout handle input
+    if (viewState === 'results') return;
 
     if (key.tab) {
       if (activeElement === 'mode') setActiveElement('input');
@@ -51,8 +48,6 @@ export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNa
       const res = await searchEngine.search(value, { limit: 20, mode });
       setResults(res);
 
-      // Basic tokenization for highlighting logic
-      // In a real scenario, we would reuse the Normalizer to get exact lemmas
       const tokens = tokenize(value, mode === SearchMode.Boolean);
       setSearchTerms(tokens);
 
@@ -87,7 +82,7 @@ export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNa
     <Box flexDirection="column" height="100%" width="100%">
       <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1} width="100%">
         <Text bold>
-          {`Search Engine\n\nTab      - Toggle Focus\nEscape   - Toggle Mode\nCtrl + C - Exit`}
+          {'Search Engine\n\nTab      - Toggle Focus\nEscape   - Toggle Mode\nCtrl + C - Exit'}
         </Text>
       </Box>
 

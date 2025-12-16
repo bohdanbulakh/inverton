@@ -9,13 +9,11 @@ import { StatusBar } from '../status-bar';
 
 const archivePath = path.join(process.cwd(), 'data', 'dictionaries.zip');
 
-// Monitor UI Component
 const MonitorApp = ({ queue, redis }: { queue: IndexingQueue, redis: RedisClient }) => {
   const [stats, setStats] = useState<QueueStats>(queue.getStats());
   const [dbSize, setDbSize] = useState(0);
 
   useEffect(() => {
-    // Poll stats every second
     const interval = setInterval(async () => {
       const sizeStr = await redis.get('total_docs');
       setDbSize(sizeStr ? parseInt(sizeStr, 10) : 0);
@@ -44,7 +42,6 @@ const MonitorApp = ({ queue, redis }: { queue: IndexingQueue, redis: RedisClient
   );
 };
 
-// Setup Component
 const StartCommand = () => {
   const [concurrency, setConcurrency] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -55,7 +52,6 @@ const StartCommand = () => {
     const limit = parseInt(value, 10);
     const validLimit = isNaN(limit) || limit < 1 ? 5 : limit;
 
-    // Initialize System
     const redis = new RedisClient({ port: 6379, host: 'localhost' }, 20, archivePath);
     console.log('Initializing Redis and loading dictionaries...');
 

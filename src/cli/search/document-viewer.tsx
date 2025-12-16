@@ -20,12 +20,10 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
   const [startLine, setStartLine] = useState(1);
   const [currentHighlightIdx, setCurrentHighlightIdx] = useState(0);
 
-  // Sort highlights to navigate them in order
   const sortedHighlights = useMemo(() =>
     [...highlights].sort((a, b) => a.line === b.line ? a.position - b.position : a.line - b.line),
   [highlights]);
 
-  // Load visible window of file
   useEffect(() => {
     let mounted = true;
     readFileWindow(filePath, startLine, startLine + height - 1)
@@ -40,7 +38,6 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     };
   }, [filePath, startLine, height]);
 
-  // Reset to first highlight when file changes
   useEffect(() => {
     if (sortedHighlights.length > 0) {
       setStartLine(Math.max(1, sortedHighlights[0].line - Math.floor(height / 2)));
@@ -56,7 +53,6 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     if (key.upArrow) setStartLine((prev) => Math.max(1, prev - 1));
     if (key.downArrow) setStartLine((prev) => prev + 1);
 
-    // Jump between occurrences
     if (sortedHighlights.length > 0) {
       if (input === 'n') {
         const next = (currentHighlightIdx + 1) % sortedHighlights.length;
@@ -75,7 +71,6 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     const hits = sortedHighlights.filter((h) => h.line === lineNum);
     if (hits.length === 0) return <Text>{line}</Text>;
 
-    // Simple highlighting logic
     const parts = [];
     let lastIdx = 0;
     hits.forEach((h, i) => {

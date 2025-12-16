@@ -18,12 +18,10 @@ export const SearchResultsLayout: React.FC<Props> = ({ results, terms, docInfoSe
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
   const { stdout } = useStdout();
-  // Calculate height dynamically
   const height = (stdout?.rows || 24) - 2;
 
   const currentResult = results[activeIndex];
 
-  // Load highlights for current document
   useEffect(() => {
     if (currentResult) {
       const docId = currentResult.docId;
