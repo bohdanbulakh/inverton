@@ -1,10 +1,10 @@
 import { Transform, TransformCallback } from 'stream';
 import { Token } from '../types';
-import { tokenize } from './tokenizer';
+
+const WORD_REGEX = /[\p{L}\p{N}_]+/gu;
 
 export class TokenizerStream extends Transform {
   private lineCounter = 0;
-  private wordPosCounter = 0;
 
   constructor () {
     super({ objectMode: true });
@@ -13,17 +13,20 @@ export class TokenizerStream extends Transform {
   _transform (line: string, _encoding: string, callback: TransformCallback): void {
     this.lineCounter++;
 
-    for (const term of tokenize(line)) {
-      this.wordPosCounter++;
+    for (const match of line.matchAll(WORD_REGEX)) {
+      const term = match[0];
+      const position = match.index;
 
-      const token: Token = {
-        term,
-        line: this.lineCounter,
-        position: this.wordPosCounter,
-        length: term.length,
-      };
+      if (position !== undefined) {
+        const token: Token = {
+          term,
+          line: this.lineCounter,
+          position: position,
+          length: term.length,
+        };
 
-      this.push(token);
+        this.push(token);
+      }
     }
 
     callback();
