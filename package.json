@@ -13,10 +13,13 @@
     "dev": "node --loader ts-node/esm src/index.tsx",
     "start": "node --loader ts-node/esm src/cli/commands/start.tsx",
     "index": "node --loader ts-node/esm src/cli/commands/index.tsx",
-    "search": "node --loader ts-node/esm src/cli/commands/search.tsx"
+    "search": "node --loader ts-node/esm src/cli/commands/search.tsx",
+    "bench:queue": "ts-node bench/queue-throughput.ts",
+    "bench:query": "ts-node bench/query-latency.ts"
   },
   "files": [
-    "src"
+    "src",
+    "bench"
   ],
   "dependencies": {
     "ink": "^4.1.0",

@@ -16,7 +16,10 @@
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src"],
+  "include": [
+    "src",
+    "bench"
+  ],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

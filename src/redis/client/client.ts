@@ -11,7 +11,9 @@ import { AsyncQueue } from '../../async';
 import * as constants from 'node:constants';
 import { StopWordsLoader } from './stopwords-loader';
 
-import stopWordsIso from 'stopwords-iso';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const stopWordsIso = require('stopwords-iso');
 
 export class RedisClient extends Redis {
   private readonly redisNormalizeService: RedisLemmaService;
@@ -107,14 +109,13 @@ export class RedisClient extends Redis {
   }
 
   private async loadStopWords () {
-    const stopWordsData = stopWordsIso as unknown as Record<string, string[]>;
-    const languages = Object.keys(stopWordsData).filter((code) => code !== 'default');
+    const languages = Object.keys(stopWordsIso).filter((code) => code !== 'default');
 
     const taskQueue = new AsyncQueue(this.maxLemmaLoadConcurrency);
 
     for (const langCode of languages) {
       taskQueue.addTasks(async () => {
-        const words = stopWordsData[langCode];
+        const words = stopWordsIso[langCode];
 
         if (!words || !Array.isArray(words)) {
           return;
