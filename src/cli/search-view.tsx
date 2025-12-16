@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
+import SelectInput from 'ink-select-input';
 import { Input } from './input';
 import { SearchEngine } from '../search/search-engine';
 import { SearchMode, SearchResult } from '../search/types';
-import SelectInput from 'ink-select-input';
+import { SearchResultsLayout } from './search/search-results-layout';
+import { DocumentInfoService } from '../search/document-info/document-info.interface';
+import { tokenize } from '../index/tokenizer';
 
 interface Props {
   searchEngine: SearchEngine;
+  docInfoService: DocumentInfoService;
   onNavigate: (view: 'index') => void;
 }
 
-function toErrorMessage (err: unknown): string {
-  if (err instanceof Error) return err.message;
-  if (typeof err === 'string') return err;
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return 'Unknown error';
-  }
-}
+export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNavigate }) => {
+  // UI State
+  const [viewState, setViewState] = useState<'input' | 'results'>('input');
 
-export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
+  // Search State
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,16 +26,19 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
   const [activeElement, setActiveElement] = useState<'mode' | 'input'>('input');
   const [error, setError] = useState<string | null>(null);
 
+  // Terms for highlighting
+  const [searchTerms, setSearchTerms] = useState<string[]>([]);
+
   useInput((_input, key) => {
+    if (viewState === 'results') return; // Let SearchResultsLayout handle input
+
     if (key.tab) {
       if (activeElement === 'mode') setActiveElement('input');
-      else onNavigate('index');
     }
 
     if (key.escape) {
       setActiveElement(activeElement === 'input' ? 'mode' : 'input');
     }
-    if (error) setError(null);
   });
 
   const handleSearch = async (value: string) => {
@@ -47,11 +48,18 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
     setError(null);
 
     try {
-      const res = await searchEngine.search(value, { limit: 10, mode });
+      const res = await searchEngine.search(value, { limit: 20, mode });
       setResults(res);
-    } catch (err) {
+
+      // Basic tokenization for highlighting logic
+      // In a real scenario, we would reuse the Normalizer to get exact lemmas
+      const tokens = tokenize(value, mode === SearchMode.Boolean);
+      setSearchTerms(tokens);
+
+      setViewState('results');
+    } catch (err: any) {
       setResults([]);
-      setError(toErrorMessage(err));
+      setError(err.message || 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -63,15 +71,23 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
     { label: 'Boolean', value: SearchMode.Boolean },
   ];
 
+  if (viewState === 'results') {
+    return (
+      <SearchResultsLayout
+        results={results}
+        terms={searchTerms}
+        docInfoService={docInfoService}
+        onExit={() => onNavigate('index')}
+        onBack={() => setViewState('input')}
+      />
+    );
+  }
+
   return (
     <Box flexDirection="column" height="100%" width="100%">
       <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1} width="100%">
         <Text bold>
-          {`Search Engine
-
-Tab      - Index
-Escape   - Toggle Mode/Input
-Ctrl + C - Exit`}
+          {`Search Engine\n\nTab      - Toggle Focus\nEscape   - Toggle Mode\nCtrl + C - Exit`}
         </Text>
       </Box>
 
@@ -92,7 +108,6 @@ Ctrl + C - Exit`}
               setMode(item.value as SearchMode);
               setActiveElement('input');
               setError(null);
-              setResults([]);
             }}
           />
         )}
@@ -118,35 +133,12 @@ Ctrl + C - Exit`}
       )}
 
       <Box marginTop={1} flexDirection="column" width="100%" flexGrow={1}>
-        {loading && <Text>Searching...</Text>}
-
-        {!loading && error && (
-          <Box borderStyle="single" borderColor="red" paddingX={1} flexDirection="column" width="100%">
-            <Text bold color="red">Search error</Text>
+        {loading && <Text color="yellow">Searching...</Text>}
+        {error && (
+          <Box borderStyle="single" borderColor="red" paddingX={1}>
             <Text color="red">{error}</Text>
           </Box>
         )}
-
-        {!loading && !error && results.length === 0 && query && (
-          <Text color="grey">No results found.</Text>
-        )}
-
-        {!loading && !error && results.map((res, idx) => (
-          <Box
-            key={idx}
-            borderStyle="single"
-            paddingX={1}
-            marginBottom={1}
-            flexDirection="column"
-            width="100%"
-          >
-            <Box justifyContent="space-between" width="100%">
-              <Text bold color="cyan">{res.path}</Text>
-              <Text color="yellow">Score: {res.score.toFixed(4)}</Text>
-            </Box>
-            <Text color="gray">ID: {res.docId}</Text>
-          </Box>
-        ))}
       </Box>
     </Box>
   );

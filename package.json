@@ -11,7 +11,9 @@
     "build": "tsc",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "dev": "node --loader ts-node/esm src/index.tsx",
-    "start": "node --loader ts-node/esm src/index.tsx"
+    "start": "node --loader ts-node/esm src/cli/commands/start.tsx",
+    "index": "node --loader ts-node/esm src/cli/commands/index.tsx",
+    "search": "node --loader ts-node/esm src/cli/commands/search.tsx"
   },
   "files": [
     "src"
