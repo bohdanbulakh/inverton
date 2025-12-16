@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { render, Text } from 'ink';
+import { render, Text, useInput } from 'ink';
 import meow from 'meow';
 import * as path from 'path';
 import { RedisClient } from '../../redis/client/client';
@@ -29,6 +29,10 @@ const IndexCommand = () => {
   const [ready, setReady] = useState(false);
   const [queue, setQueue] = useState<IndexingQueue | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+
+  useInput((input, key) => {
+    if (input.toLowerCase() === 'c' && key.ctrl) process.exit(0);
+  });
 
   React.useEffect(() => {
     const redis = new RedisClient({ port: 6379, host: 'localhost' }, 20, archivePath);
@@ -69,4 +73,4 @@ const IndexCommand = () => {
   );
 };
 
-render(<IndexCommand />);
+render(<IndexCommand />, {exitOnCtrlC: false});

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { readFileWindow } from '../../fs/file-reader';
+import { readFileWindow, countLines } from '../../fs/file-reader';
 
 export interface Highlight {
   line: number;
@@ -19,10 +19,26 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
   const [content, setContent] = useState<string[]>([]);
   const [startLine, setStartLine] = useState(1);
   const [currentHighlightIdx, setCurrentHighlightIdx] = useState(0);
+  const [totalLines, setTotalLines] = useState<number | null>(null);
 
   const sortedHighlights = useMemo(() =>
     [...highlights].sort((a, b) => a.line === b.line ? a.position - b.position : a.line - b.line),
   [highlights]);
+
+  useEffect(() => {
+    let mounted = true;
+    setTotalLines(null);
+    countLines(filePath)
+      .then((count) => {
+        if (mounted) setTotalLines(count);
+      })
+      .catch(() => {
+        if (mounted) setTotalLines(0);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [filePath]);
 
   useEffect(() => {
     let mounted = true;
@@ -51,7 +67,14 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     if (!isActive) return;
 
     if (key.upArrow) setStartLine((prev) => Math.max(1, prev - 1));
-    if (key.downArrow) setStartLine((prev) => prev + 1);
+    if (key.downArrow) {
+      setStartLine((prev) => {
+        if (totalLines !== null) {
+          return Math.min(prev + 1, totalLines);
+        }
+        return prev + 1;
+      });
+    }
 
     if (sortedHighlights.length > 0) {
       if (input === 'n') {
@@ -78,7 +101,7 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
       const isCurrent = sortedHighlights[currentHighlightIdx] === h;
       parts.push(
         <Text key={`hl-${i}`} backgroundColor={isCurrent ? 'yellow' : 'blue'} color="black">
-          {line.substr(h.position, h.length)}
+          {line.substring(h.position, h.length)}
         </Text>
       );
       lastIdx = h.position + h.length;
@@ -97,7 +120,7 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
       ))}
       <Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false}>
         <Text dimColor>
-          Line: {startLine} | Matches: {sortedHighlights.length} | [n]ext / [p]rev
+          Line: {startLine} {totalLines ? `/ ${totalLines}` : ''} | Matches: {sortedHighlights.length} | [n]ext / [p]rev
         </Text>
       </Box>
     </Box>

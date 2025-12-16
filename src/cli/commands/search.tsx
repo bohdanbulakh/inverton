@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { render, Text } from 'ink';
+import { render, Text, useInput } from 'ink';
 import * as path from 'path';
 import { RedisClient } from '../../redis/client/client';
 import { SearchEngine } from '../../search/search-engine';
@@ -17,6 +17,10 @@ const SearchCommand = () => {
     searchEngine: SearchEngine;
     docInfo: RedisDocumentInfoService;
   } | null>(null);
+
+  useInput((input, key) => {
+    if (input.toLowerCase() === 'c' && key.ctrl) process.exit(0);
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -49,4 +53,4 @@ const SearchCommand = () => {
   );
 };
 
-render(<SearchCommand />, { exitOnCtrlC: true });
+render(<SearchCommand />, { exitOnCtrlC: false });
