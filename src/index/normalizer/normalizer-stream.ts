@@ -1,8 +1,8 @@
 import { Transform, TransformCallback } from 'stream';
-import { Token } from '../types';
+import { Token, NormalizedToken } from '../types';
 import { RedisClient } from '../../redis/client/client';
-import { NormalizedToken } from '../types';
 import { Normalizer } from './normalizer';
+import { RedisDocumentInfoService } from '../../search/document-info/document-info-service';
 
 export class TermNormalizerStream extends Transform {
   private batch: Token[] = [];
@@ -11,44 +11,56 @@ export class TermNormalizerStream extends Transform {
 
   constructor (redis: RedisClient) {
     super({ objectMode: true });
-    this.normalizer = new Normalizer(redis);
+
+    const docInfoService = new RedisDocumentInfoService(redis);
+    this.normalizer = new Normalizer(docInfoService);
   }
 
   _transform (chunk: Token, _encoding: string, callback: TransformCallback): void {
     this.batch.push(chunk);
     if (this.batch.length >= this.batchSize) {
       this.processBatch().then(() => callback()).catch(callback);
-    } else {
-      callback();
+      return;
     }
+
+    callback();
   }
 
   _flush (callback: TransformCallback): void {
-    if (this.batch.length > 0) {
-      this.processBatch().then(() => callback()).catch(callback);
-    } else {
+    if (this.batch.length === 0) {
       callback();
+      return;
     }
+
+    this.processBatch().then(() => callback()).catch(callback);
   }
 
   private async processBatch (): Promise<void> {
-    if (this.batch.length === 0) return;
-
-    const terms = this.batch.map((t) => t.term);
-
-    const lemmas = await this.normalizer.fetchLemmas(terms);
-    const isStopWordFlags = await this.normalizer.checkStopWords(lemmas);
-
-    for (let i = 0; i < this.batch.length; i++) {
-      if (!isStopWordFlags[i]) {
-        const out: NormalizedToken = {
-          ...this.batch[i],
-          lemma: lemmas[i],
-        };
-        this.push(out);
-      }
-    }
-
+    const tokens = this.batch;
     this.batch = [];
+
+    if (tokens.length === 0) return;
+
+    const terms = tokens.map((t) => t.term);
+
+    const normalized = await this.normalizer.normalizeTerms(terms, false);
+
+    let outIdx = 0;
+
+    for (let i = 0; i < tokens.length; i++) {
+      const lemma = normalized[outIdx];
+
+      if (lemma === undefined) break;
+
+      if (tokens[i].term.toLowerCase() !== lemma) continue;
+
+      const out: NormalizedToken = {
+        ...tokens[i],
+        lemma,
+      };
+
+      this.push(out);
+      outIdx++;
+    }
   }
 }

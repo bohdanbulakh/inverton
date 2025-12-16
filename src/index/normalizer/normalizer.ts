@@ -1,64 +1,64 @@
-import { RedisClient } from '../../redis/client/client';
+import { DocumentInfoService } from '../../search/document-info/document-info.interface';
+
+const BOOL_OPS = new Set(['AND', 'OR', 'NOT']);
 
 export class Normalizer {
-  constructor (private readonly redis: RedisClient) {}
+  constructor (private readonly docInfo: DocumentInfoService) {}
 
-  async normalizeTerms (terms: string[]): Promise<string[]> {
-    const lemmas = await this.fetchLemmas(terms);
-    const isStopWordFlags = await this.checkStopWords(lemmas);
+  async normalizeTerms (terms: string[], isBooleanQuery = false): Promise<string[]> {
+    if (!isBooleanQuery) {
+      const lemmas = await this.fetchLemmas(terms);
+      const isStop = await this.checkStopWords(lemmas);
 
-    const normalized: string[] = [];
-    for (let i = 0; i < terms.length; i++) {
-      if (!isStopWordFlags[i]) {
-        normalized.push(lemmas[i]);
+      const out: string[] = [];
+      for (let i = 0; i < terms.length; i++) {
+        if (!isStop[i]) out.push(lemmas[i]);
       }
+      return out;
     }
-    return normalized;
+
+    const termValues: string[] = [];
+    for (const t of terms) {
+      const upper = t.toUpperCase();
+      if (t === '(' || t === ')') continue;
+      if (BOOL_OPS.has(upper)) continue;
+      termValues.push(t);
+    }
+
+    const lemmas = await this.fetchLemmas(termValues);
+
+    const out: string[] = [];
+    let termPtr = 0;
+
+    for (const t of terms) {
+      const upper = t.toUpperCase();
+
+      if (t === '(' || t === ')') {
+        out.push(t);
+        continue;
+      }
+
+      if (BOOL_OPS.has(upper)) {
+        out.push(upper);
+        continue;
+      }
+
+      out.push(lemmas[termPtr]);
+      termPtr++;
+    }
+
+    return out;
   }
 
-  async fetchLemmas (terms: string[]): Promise<string[]> {
-    const pipeline = this.redis.pipeline();
+  private async fetchLemmas (terms: string[]): Promise<string[]> {
+    if (terms.length === 0) return [];
 
-    for (const term of terms) {
-      pipeline.get(term.toLowerCase());
-    }
-
-    const results = await pipeline.exec();
-
-    if (!results) {
-      return terms.map((t) => t.toLowerCase());
-    }
-
-    return results.map((result, i) => {
-      const [err, val] = result;
-      if (err) {
-        console.error(`Error fetching lemma for "${terms[i]}":`, err);
-        return terms[i].toLowerCase();
-      }
-      return val ? (val as string) : terms[i].toLowerCase();
-    });
+    const vals = await this.docInfo.getLemmas(terms);
+    return vals.map((val, i) => (val ? val : terms[i].toLowerCase()));
   }
 
-  async checkStopWords (lemmas: string[]): Promise<boolean[]> {
-    const pipeline = this.redis.pipeline();
-
-    for (const lemma of lemmas) {
-      pipeline.get(`sw:${lemma}`);
-    }
-
-    const results = await pipeline.exec();
-
-    if (!results) {
-      return new Array(lemmas.length).fill(false);
-    }
-
-    return results.map((result, i) => {
-      const [err, val] = result;
-      if (err) {
-        console.error(`Error fetching stop word status for "${lemmas[i]}":`, err);
-        return false;
-      }
-      return val !== null;
-    });
+  private async checkStopWords (lemmas: string[]): Promise<boolean[]> {
+    if (lemmas.length === 0) return [];
+    return this.docInfo.areStopWords(lemmas);
   }
 }
