@@ -7,6 +7,10 @@ export const searchPhrase: SearchStrategy = async (
 ): Promise<Map<string, number>> => {
   const docScores = new Map<string, number>();
 
+  if (terms.length === 0) {
+    return docScores;
+  }
+
   const docSets = await Promise.all(terms.map((t) => searchService.getDocIdsForTerm(t)));
 
   if (docSets.some((ids) => ids.length === 0)) {
@@ -28,7 +32,10 @@ export const searchPhrase: SearchStrategy = async (
 
     for (const term of terms) {
       const entries = await searchService.getTermPositions(term, docId);
-      const positions = entries.map((e) => parseInt(e.split(':')[1], 10)).sort((a, b) => a - b);
+      const positions = entries
+        .map((e) => parseInt(e.split(':')[1], 10))
+        .sort((a, b) => a - b);
+
       positionsMap.set(term, positions);
     }
 
