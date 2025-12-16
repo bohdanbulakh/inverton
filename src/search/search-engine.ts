@@ -1,5 +1,5 @@
 import { RedisClient } from '../redis/client/client';
-import { SearchResult, SearchOptions, SearchMode } from './types';
+import { SearchMode, SearchOptions, SearchResult } from './types';
 import { Normalizer } from '../index/normalizer';
 import { RedisDocumentInfoService } from './document-info/document-info-service';
 import { searchBoolean, searchKeyword, searchPhrase, SearchStrategy } from './strategies';
@@ -10,7 +10,7 @@ export class SearchEngine {
   private readonly redisDocumentInfoService;
 
   constructor (private readonly redisClient: RedisClient) {
-    this.normalizer = new Normalizer(redisClient);
+    this.normalizer = new Normalizer(new RedisDocumentInfoService(redisClient));
     this.redisDocumentInfoService = new RedisDocumentInfoService(redisClient);
   }
 
@@ -24,14 +24,15 @@ export class SearchEngine {
     };
 
   async search (query: string, options: SearchOptions): Promise<SearchResult[]> {
-    const rawTerms = tokenize(query);
-    const terms = await this.normalizer.normalizeTerms(rawTerms);
+    const mode = options.mode ?? SearchMode.Keyword;
+    const isBoolean = mode === SearchMode.Boolean;
+
+    const rawTerms = tokenize(query, isBoolean);
+    const terms = await this.normalizer.normalizeTerms(rawTerms, isBoolean);
 
     if (terms.length === 0) {
       return [];
     }
-
-    const mode = options.mode ?? SearchMode.Keyword;
 
     const docScores = await this.searchStrategies[mode](terms, this.redisDocumentInfoService);
     return this.formatResults(docScores, options.limit);
