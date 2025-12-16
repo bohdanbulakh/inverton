@@ -33,7 +33,8 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
       if (activeElement === 'mode') setActiveElement('input');
       else onNavigate('index');
     }
-    if (key.escape) {
+
+    if (key.leftArrow) {
       setActiveElement(activeElement === 'input' ? 'mode' : 'input');
     }
     if (error) setError(null);
@@ -59,13 +60,13 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
   const modeItems = [
     { label: 'Keyword (TF-IDF)', value: SearchMode.Keyword },
     { label: 'Phrase (Exact Sequence)', value: SearchMode.Phrase },
-    { label: 'Boolean (AND)', value: SearchMode.Boolean },
+    { label: 'Boolean', value: SearchMode.Boolean },
   ];
 
   return (
     <Box flexDirection="column" height="100%" width="100%">
       <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1} width="100%">
-        <Text bold>Search Engine (Tab: Index | Esc: Toggle Mode/Input)</Text>
+        <Text bold>Search Engine (Tab: Index | Left arrow: Toggle Mode/Input)</Text>
       </Box>
 
       <Box
