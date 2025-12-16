@@ -53,7 +53,6 @@ const StartCommand = () => {
     const validLimit = isNaN(limit) || limit < 1 ? 5 : limit;
 
     const redis = new RedisClient({ port: 6379, host: 'localhost' }, 20, archivePath);
-    console.log('Initializing Redis and loading dictionaries...');
 
     redis.ready().then(() => {
       console.clear();

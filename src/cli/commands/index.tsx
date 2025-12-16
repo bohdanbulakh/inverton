@@ -50,7 +50,6 @@ const IndexCommand = () => {
           const stats = q.getStats();
           if (stats.active === 0 && stats.processed + stats.failed >= stats.total) {
             clearInterval(checkDone);
-            console.log('Indexing complete.');
             process.exit(0);
           }
         }, 500);

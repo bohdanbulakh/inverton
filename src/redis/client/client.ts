@@ -94,8 +94,6 @@ export class RedisClient extends Redis {
               return;
             }
 
-            console.log(`Started loading for language: ${langCode}`);
-
             await this.redisNormalizeService.deleteAllLemmas(langCode);
             await this.loadLemmaToRedis(entry);
             await this.redisNormalizeService.setLemmaHash(langCode, comparedHashes.newHash);
@@ -112,8 +110,6 @@ export class RedisClient extends Redis {
 
   private async loadStopWords () {
     const languages = Object.keys(stopWordsIso).filter((code) => code !== 'default') as (keyof typeof stopWordsIso)[];
-
-    console.log(`Starting loading stop words for ${languages.length} languages...`);
 
     const taskQueue = new AsyncQueue(this.maxLemmaLoadConcurrency);
 
@@ -141,7 +137,6 @@ export class RedisClient extends Redis {
     }
 
     await taskQueue.onDone();
-    console.log('Finished loading stop words.');
   }
 
   private async compareLangHashes (langCode: string, entry: unzipper.Entry) {
