@@ -28,13 +28,13 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
   const [activeElement, setActiveElement] = useState<'mode' | 'input'>('input');
   const [error, setError] = useState<string | null>(null);
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.tab) {
       if (activeElement === 'mode') setActiveElement('input');
       else onNavigate('index');
     }
 
-    if (key.leftArrow) {
+    if (key.escape) {
       setActiveElement(activeElement === 'input' ? 'mode' : 'input');
     }
     if (error) setError(null);
@@ -66,7 +66,13 @@ export const SearchView: React.FC<Props> = ({ searchEngine, onNavigate }) => {
   return (
     <Box flexDirection="column" height="100%" width="100%">
       <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1} width="100%">
-        <Text bold>Search Engine (Tab: Index | Left arrow: Toggle Mode/Input)</Text>
+        <Text bold>
+          {`Search Engine
+
+Tab      - Index
+Escape   - Toggle Mode/Input
+Ctrl + C - Exit`}
+        </Text>
       </Box>
 
       <Box

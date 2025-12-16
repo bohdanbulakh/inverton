@@ -22,7 +22,7 @@ redisClient.ready().then(() => {
   const queue = new IndexingQueue(indexingService, 5);
   const searchEngine = new SearchEngine(redisClient);
 
-  render(<App queue={queue} searchEngine={searchEngine} />, { patchConsole: false });
+  render(<App queue={queue} searchEngine={searchEngine} />, { exitOnCtrlC: false });
 }).catch((err) => {
   console.error('Failed to initialize:', err);
   process.exit(1);

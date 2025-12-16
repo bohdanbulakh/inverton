@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,42 +23,34 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
   const [offset, setOffset] = useState(0);
 
   const { stdout } = useStdout();
-  const [windowHeight, setWindowHeight] = useState(stdout?.rows || 24);
 
-  const VISIBLE_ITEMS = Math.max(1, windowHeight - 12);
+  const [termHeight, setTermHeight] = useState(() => stdout?.rows ?? 24);
 
   useEffect(() => {
     if (!stdout) return;
-    const onResize = () => {
-      setWindowHeight(stdout.rows);
-    };
+
+    const onResize = () => setTermHeight(stdout.rows);
     stdout.on('resize', onResize);
+
     return () => {
       stdout.off('resize', onResize);
     };
   }, [stdout]);
 
-  useEffect(() => {
-    loadDirectory(cwd);
-  }, [cwd]);
+  const VISIBLE_ITEMS = useMemo(() => Math.max(1, termHeight - 12), [termHeight]);
 
-  useEffect(() => {
-    if (selectedIndex >= offset + VISIBLE_ITEMS) {
-      setOffset(Math.max(0, selectedIndex - VISIBLE_ITEMS + 1));
-    } else if (selectedIndex < offset) {
-      setOffset(selectedIndex);
-    }
-  }, [selectedIndex, offset, VISIBLE_ITEMS]);
-
-  const loadDirectory = (dir: string) => {
+  const loadDirectory = useCallback((dir: string) => {
     try {
       const files = fs.readdirSync(dir);
+
       const fileItems: FileItem[] = files.map((file) => {
         const fullPath = path.join(dir, file);
         let isDir = false;
         try {
           isDir = fs.statSync(fullPath).isDirectory();
-        } catch {}
+        } catch {
+          // ignore stat errors
+        }
         return { label: isDir ? `[DIR] ${file}` : file, value: fullPath, isDir };
       });
 
@@ -76,45 +68,67 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
       setItems(fileItems);
       setSelectedIndex(0);
       setOffset(0);
+      setMessage('');
     } catch (err) {
-      setMessage(`Error reading directory: ${err}`);
+      setMessage(`Error reading directory: ${String(err)}`);
+      setItems([]);
+      setSelectedIndex(0);
+      setOffset(0);
     }
-  };
+  }, []);
 
-  const handleSelect = () => {
+  useEffect(() => {
+    loadDirectory(cwd);
+  }, [cwd, loadDirectory]);
+
+  useEffect(() => {
+    setOffset((prev) => {
+      if (selectedIndex >= prev + VISIBLE_ITEMS) return Math.max(0, selectedIndex - VISIBLE_ITEMS + 1);
+      if (selectedIndex < prev) return selectedIndex;
+      return prev;
+    });
+  }, [selectedIndex, VISIBLE_ITEMS]);
+
+  const handleReturnToParent = useCallback(() => {
+    const parent = items.find((f) => f.isDir && f.label === '..');
+    if (parent) setCwd(parent.value);
+  }, [items]);
+
+  const handleSelect = useCallback(() => {
     const item = items[selectedIndex];
     if (!item) return;
 
     if (item.isDir) {
       setCwd(item.value);
-    } else {
-      queue.enqueue(item.value);
-      setMessage(`Queued: ${path.basename(item.value)}`);
-      setTimeout(() => setMessage(''), 2000);
+      return;
     }
-  };
 
-  const handleReturnToParent = useCallback(() => {
-    const [parent] = items.filter((file) => file.isDir && file.label === '..');
-
-    if (parent) {
-      setCwd(parent.value);
-    }
-  }, [items]);
+    queue.enqueue(item.value);
+    setMessage(`Queued: ${path.basename(item.value)}`);
+    setTimeout(() => setMessage(''), 2000);
+  }, [items, selectedIndex, queue]);
 
   useInput((_input, key) => {
     if (key.tab) {
-      onNavigate('search'); return;
+      onNavigate('search');
+      return;
     }
+
     if (key.upArrow) {
-      setSelectedIndex(Math.max(0, selectedIndex - 1));
+      setSelectedIndex((i) => Math.max(0, i - 1));
+      return;
     }
+
     if (key.downArrow) {
-      setSelectedIndex(Math.min(items.length - 1, selectedIndex + 1));
+      setSelectedIndex((i) => Math.min(items.length - 1, i + 1));
+      return;
     }
+
     if (key.leftArrow) {
       handleReturnToParent();
+      return;
     }
+
     if (key.return || key.rightArrow) {
       handleSelect();
     }
@@ -124,30 +138,38 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1}>
-        <Text bold>File Browser (Press Enter to Index, Tab to Search)</Text>
+      <Box borderStyle="double" borderColor="magenta" paddingX={1} marginBottom={1}>
+        <Text bold>
+          {'File Browser\n\nEnter   - Open\nTab     - Search\nEsc     - Exit'}
+        </Text>
       </Box>
+
       <Box paddingX={1} marginBottom={1} width="100%">
         <Text color="yellow">Current Dir: {cwd}</Text>
       </Box>
-      {message && (
+
+      {message ? (
         <Box paddingX={1} marginBottom={1} width="100%">
           <Text color="green">{message}</Text>
         </Box>
-      )}
+      ) : null}
+
       <Box flexDirection="column" flexGrow={1} width="100%">
-        {visibleItems.length > 0 ? visibleItems.map((item, index) => {
-          const actualIndex = offset + index;
-          const isSelected = actualIndex === selectedIndex;
-          return (
-            <Box key={item.value + actualIndex} width="100%">
-              <Text color={isSelected ? 'green' : 'white'} bold={isSelected} wrap="truncate-end">
-                {isSelected ? '> ' : '  '}
-                {item.label}
-              </Text>
-            </Box>
-          );
-        }) : (
+        {visibleItems.length > 0 ? (
+          visibleItems.map((item, index) => {
+            const actualIndex = offset + index;
+            const isSelected = actualIndex === selectedIndex;
+
+            return (
+              <Box key={item.value + actualIndex} width="100%">
+                <Text color={isSelected ? 'green' : 'white'} bold={isSelected} wrap="truncate-end">
+                  {isSelected ? '> ' : '  '}
+                  {item.label}
+                </Text>
+              </Box>
+            );
+          })
+        ) : (
           <Text color="gray">Directory is empty</Text>
         )}
       </Box>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, useStdout } from 'ink';
+import { Box, useInput } from 'ink';
 import { SearchEngine } from '../search/search-engine';
 import { IndexingQueue, QueueStats } from '../index/indexing-queue';
 import { IndexingView } from './indexing-view';
@@ -14,16 +14,12 @@ interface Props {
 export const App: React.FC<Props> = ({ queue, searchEngine }) => {
   const [view, setView] = useState<'index' | 'search'>('index');
   const [stats, setStats] = useState<QueueStats>(queue.getStats());
-  const { stdout } = useStdout();
-  const [key, setKey] = useState(0);
+
+  useInput((input, key) => {
+    if (input.toLowerCase() === 'c' && key.ctrl) process.exit(0);
+  });
 
   useEffect(() => {
-    const onResize = () => {
-      stdout.write('\x1b[2J');
-      setKey((prevKey) => prevKey + 1);
-    };
-    stdout.on('resize', onResize);
-
     const onStats = (newStats: QueueStats) => setStats({ ...newStats });
     queue.on('stats', onStats);
     return () => {
@@ -32,7 +28,7 @@ export const App: React.FC<Props> = ({ queue, searchEngine }) => {
   }, [queue]);
 
   return (
-    <Box flexDirection="column" flexGrow={1} key={key}>
+    <Box flexDirection="column" flexGrow={1}>
       <Box flexDirection="column" flexGrow={1}>
         {view === 'index' ? (
           <IndexingView queue={queue} onNavigate={setView} />
