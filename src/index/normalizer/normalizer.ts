@@ -50,6 +50,13 @@ export class Normalizer {
     return out;
   }
 
+  async normalizeForIndexing (terms: string[]): Promise<(string | null)[]> {
+    const lemmas = await this.fetchLemmas(terms);
+    const isStop = await this.checkStopWords(lemmas);
+
+    return terms.map((_, i) => (isStop[i] ? null : lemmas[i]));
+  }
+
   private async fetchLemmas (terms: string[]): Promise<string[]> {
     if (terms.length === 0) return [];
 

@@ -104,8 +104,6 @@ export const IndexingView: React.FC<Props> = ({ queue, onNavigate }) => {
     }
 
     queue.enqueue(item.value);
-    setMessage(`Queued: ${path.basename(item.value)}`);
-    setTimeout(() => setMessage(''), 2000);
   }, [items, selectedIndex, queue]);
 
   useInput((_input, key) => {

@@ -90,24 +90,41 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     }
   });
 
-  const renderLine = (line: string, lineNum: number) => {
-    const hits = sortedHighlights.filter((h) => h.line === lineNum);
-    if (hits.length === 0) return <Text>{line}</Text>;
+  const renderLine = (lineContent: string, lineNum: number) => {
+    const safeLine = lineContent.replace(/\r/g, '').replace(/\t/g, '    ');
 
-    const parts = [];
+    const hits = sortedHighlights.filter((h) => h.line === lineNum);
+    if (hits.length === 0) return <Text>{safeLine}</Text>;
+
+    const elements: React.ReactNode[] = [];
     let lastIdx = 0;
+
     hits.forEach((h, i) => {
-      if (h.position > lastIdx) parts.push(<Text key={`txt-${i}`}>{line.slice(lastIdx, h.position)}</Text>);
+      if (h.position < lastIdx) return;
+      if (h.position >= safeLine.length) return;
+
+      const start = h.position;
+      const end = Math.min(h.position + h.length, safeLine.length);
+
+      if (start > lastIdx) {
+        elements.push(<Text key={`pre-${i}`}>{safeLine.slice(lastIdx, start)}</Text>);
+      }
+
       const isCurrent = sortedHighlights[currentHighlightIdx] === h;
-      parts.push(
-        <Text key={`hl-${i}`} backgroundColor={isCurrent ? 'yellow' : 'blue'} color="black">
-          {line.substring(h.position, h.length)}
+      elements.push(
+        <Text key={`hl-${i}`} backgroundColor={isCurrent ? 'yellow' : 'blue'} color={isCurrent ? 'black' : 'white'}>
+          {safeLine.slice(start, end)}
         </Text>
       );
-      lastIdx = h.position + h.length;
+
+      lastIdx = end;
     });
-    if (lastIdx < line.length) parts.push(<Text key="tail">{line.slice(lastIdx)}</Text>);
-    return <Text>{parts}</Text>;
+
+    if (lastIdx < safeLine.length) {
+      elements.push(<Text key="tail">{safeLine.slice(lastIdx)}</Text>);
+    }
+
+    return <Text>{elements}</Text>;
   };
 
   return (

@@ -43,24 +43,18 @@ export class TermNormalizerStream extends Transform {
 
     const terms = tokens.map((t) => t.term);
 
-    const normalized = await this.normalizer.normalizeTerms(terms, false);
-
-    let outIdx = 0;
+    const normalized = await this.normalizer.normalizeForIndexing(terms);
 
     for (let i = 0; i < tokens.length; i++) {
-      const lemma = normalized[outIdx];
+      const lemma = normalized[i];
 
-      if (lemma === undefined) break;
-
-      if (tokens[i].term.toLowerCase() !== lemma) continue;
-
-      const out: NormalizedToken = {
-        ...tokens[i],
-        lemma,
-      };
-
-      this.push(out);
-      outIdx++;
+      if (lemma) {
+        const out: NormalizedToken = {
+          ...tokens[i],
+          lemma,
+        };
+        this.push(out);
+      }
     }
   }
 }
