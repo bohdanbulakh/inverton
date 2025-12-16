@@ -88,7 +88,7 @@ describe('Normalizer.normalizeTerms', () => {
         lemmaMap: {},
         stopwords: [],
         input: ['Привіт', '中文123'],
-        expected: ['привіт', '中文123'], // JS toLowerCase affects Cyrillic, leaves Han unchanged
+        expected: ['привіт', '中文123'],
       },
     ];
 
@@ -145,7 +145,7 @@ describe('Normalizer.normalizeTerms', () => {
       stopwords?: string[];
       input: string[];
       expected: string[];
-      expectedLemmaInputs?: string[]; // if you want to assert exact getLemmas payload
+      expectedLemmaInputs?: string[];
     }> = [
       {
         name: 'does NOT remove stopwords in boolean mode',

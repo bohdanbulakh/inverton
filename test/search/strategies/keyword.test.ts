@@ -1,8 +1,8 @@
 import { DocumentInfoService } from '../../../src/search/document-info/document-info.interface';
 import { searchKeyword } from '../../../src/search/strategies';
 
-type TfTable = Record<string, Record<string, number>>; // term -> docId -> tf
-type PostingTable = Record<string, string[]>; // term -> [docIds]
+type TfTable = Record<string, Record<string, number>>;
+type PostingTable = Record<string, string[]>;
 
 function makeDocInfoMock (opts: {
   totalDocs: number;
@@ -205,10 +205,6 @@ describe('searchKeyword', () => {
     approxEqual(res.get('d2')!, 1 * idfB);
   });
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // + ~20 more cases via .each (TF-IDF validity + corner cases + call behavior)
-  // ─────────────────────────────────────────────────────────────────────────────
-
   describe('additional TF-IDF + behavior cases', () => {
     const cases: Array<{
       name: string;
@@ -235,7 +231,7 @@ describe('searchKeyword', () => {
         totalDocs: 10,
         terms: ['a'],
         postings: { a: ['d1', 'd2'] },
-        tf: { a: { d1: 3 } }, // no d2
+        tf: { a: { d1: 3 } },
         assert: (res) => {
           const idf = Math.log10(10 / 2);
           approxEqual(res.get('d1')!, 3 * idf);
@@ -281,10 +277,10 @@ describe('searchKeyword', () => {
         name: 'idf can be negative if df > totalDocs (bad index, but math should follow)',
         totalDocs: 2,
         terms: ['a'],
-        postings: { a: ['d1', 'd2', 'd3'] }, // df=3 > totalDocs
+        postings: { a: ['d1', 'd2', 'd3'] },
         tf: { a: { d1: 1, d2: 1, d3: 1 } },
         assert: (res) => {
-          const idf = Math.log10(2 / 3); // negative
+          const idf = Math.log10(2 / 3);
           approxEqual(res.get('d1')!, 1 * idf);
           approxEqual(res.get('d2')!, 1 * idf);
           approxEqual(res.get('d3')!, 1 * idf);
@@ -306,10 +302,9 @@ describe('searchKeyword', () => {
         name: 'repeated docId in postings counts multiple times (current behavior)',
         totalDocs: 10,
         terms: ['a'],
-        postings: { a: ['d1', 'd1'] }, // duplicate doc id!
+        postings: { a: ['d1', 'd1'] },
         tf: { a: { d1: 2 } },
         assert: (res, svc) => {
-          // df uses docIds.length (2), so idf differs; and loop runs twice so it adds twice.
           const idf = Math.log10(10 / 2);
           approxEqual(res.get('d1')!, 2 * idf + 2 * idf);
           expect(svc.getTermFrequency).toHaveBeenCalledTimes(2);
@@ -329,7 +324,7 @@ describe('searchKeyword', () => {
         name: 'multiple docs + mixed tf: exact expected numbers for small case',
         totalDocs: 4,
         terms: ['a'],
-        postings: { a: ['d1', 'd2'] }, // df=2 => idf=log10(2)
+        postings: { a: ['d1', 'd2'] },
         tf: { a: { d1: 1, d2: 3 } },
         assert: (res) => {
           const idf = Math.log10(4 / 2);
@@ -367,7 +362,6 @@ describe('searchKeyword', () => {
         assert: (res) => {
           const s = res.get('d1')!;
           expect(s).not.toBe(0);
-          // ensure equals sum of both contributions
           const idfA = Math.log10(10 / 1);
           const idfB = Math.log10(10 / 1);
           approxEqual(s, 1 * idfA + 1 * idfB);
@@ -449,7 +443,7 @@ describe('searchKeyword', () => {
         totalDocs: 10,
         terms: ['a'],
         postings: { a: [] },
-        tf: { a: { d1: 100 } }, // should be ignored
+        tf: { a: { d1: 100 } },
         assert: (res) => {
           expect(res.size).toBe(0);
         },
@@ -480,7 +474,6 @@ describe('searchKeyword', () => {
       const { svc } = makeDocInfoMock({ totalDocs, postings, tf });
       const res = await searchKeyword(terms, svc);
 
-      // each term hits exactly one doc => df=1 => idf=log10(totalDocs)
       const idf = Math.log10(totalDocs / 1);
 
       expect(res.size).toBe(20);

@@ -108,7 +108,7 @@ describe('tokenize', () => {
       it.concurrent.each<
         [name: string, input: string, expected: string[]]
       >([
-        ['no spaces around parentheses', '(aANDb)', ['(', 'aANDb', ')']], // no implicit splitting inside WORD chars
+        ['no spaces around parentheses', '(aANDb)', ['(', 'aANDb', ')']],
         ['spaces between every token', ' ( a ) AND ( b ) ', ['(', 'a', ')', 'AND', '(', 'b', ')']],
         ['multiple spaces', 'a   AND   b', ['a', 'AND', 'b']],
       ])('%s', async (_name, input, expected) => {

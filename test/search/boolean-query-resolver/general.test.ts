@@ -94,7 +94,6 @@ describe('parseBooleanQuery', () => {
 
   describe('precedence', () => {
     it.concurrent('NOT binds tighter than AND', () => {
-      // NOT a AND b => (NOT a) AND b
       expect(parse('NOT a AND b')).toEqual({
         operator: 'AND',
         operands: [{ operator: 'NOT', operands: ['a'] }, 'b'],
@@ -102,7 +101,6 @@ describe('parseBooleanQuery', () => {
     });
 
     it.concurrent('NOT binds tighter than OR', () => {
-      // NOT a OR b => (NOT a) OR b
       expect(parse('NOT a OR b')).toEqual({
         operator: 'OR',
         operands: [{ operator: 'NOT', operands: ['a'] }, 'b'],
@@ -181,7 +179,6 @@ describe('parseBooleanQuery', () => {
     });
 
     it.concurrent('does NOT flatten through parentheses that change operator grouping', () => {
-      // a AND (b OR c) AND d => AND(a, OR(b,c), d)
       expect(parse('a AND (b OR c) AND d')).toEqual({
         operator: 'AND',
         operands: ['a', { operator: 'OR', operands: ['b', 'c'] }, 'd'],
@@ -189,7 +186,6 @@ describe('parseBooleanQuery', () => {
     });
 
     it.concurrent('does not flatten NOT into anything', () => {
-      // AND(NOT a, NOT b) => still separate NOT nodes
       expect(parse('NOT a AND NOT b')).toEqual({
         operator: 'AND',
         operands: [{ operator: 'NOT', operands: ['a'] }, { operator: 'NOT', operands: ['b'] }],
@@ -222,7 +218,6 @@ describe('parseBooleanQuery', () => {
     });
 
     it.concurrent('operator words inside other words are treated as terms', () => {
-      // "candy" includes "and" but must be term
       expect(parse('candy AND oryx OR notation')).toEqual({
         operator: 'OR',
         operands: [{ operator: 'AND', operands: ['candy', 'oryx'] }, 'notation'],
