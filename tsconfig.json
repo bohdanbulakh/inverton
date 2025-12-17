@@ -17,7 +17,7 @@
     "allowSyntheticDefaultImports": true
   },
   "include": [
-    "src",
+    "src", "bench"
   ],
   "ts-node": {
     "esm": true,

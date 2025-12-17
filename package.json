@@ -9,16 +9,16 @@
   "scripts": {
     "build": "tsc",
     "test:unit": "jest -c jest.unit.config.ts",
-    "test:integration": "jest -c jest.integration.config.ts --runInBand --forceExit",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest -c jest.integration.config.ts --runInBand --forceExit",
     "dev": "node --loader ts-node/esm src/index.tsx",
     "start": "node --loader ts-node/esm src/cli/commands/start.tsx",
     "index": "node --loader ts-node/esm src/cli/commands/index.tsx",
     "search": "node --loader ts-node/esm src/cli/commands/search.tsx",
-    "bench:queue": "ts-node src/bench/queue-throughput.ts",
-    "bench:query": "tsc && node dist/bench/query-latency"
+    "bench:queue": "yarn build && node --loader ts-node/esm bench/queue-throughput.js",
+    "bench:query": "yarn build && node --loader ts-node/esm dist/bench/query-latency.js"
   },
   "files": [
-    "src"
+    "src", "bench"
   ],
   "dependencies": {
     "ink": "^4.1.0",

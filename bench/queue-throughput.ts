@@ -1,6 +1,6 @@
-import { sleep } from '../async';
-import { IndexingService } from '../index/pipeline';
-import { IndexingQueue } from '../index/indexing-queue';
+import { sleep } from '../src/async';
+import { IndexingService } from '../src/index/pipeline';
+import { IndexingQueue } from '../src/index/indexing-queue';
 
 class MockIndexingService {
   async indexFile (filePath: string, docId: string): Promise<void> {
