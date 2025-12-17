@@ -4639,18 +4639,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ink-testing-library@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "ink-testing-library@npm:3.0.0"
-  peerDependencies:
-    "@types/react": ">=18.0.0"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-  checksum: 10c0/b1b98ba50c8dc00b7e2e29ab7e508770d448584af7ae2c9b71939ede28884d2d4a9b7e47c2cdeab97acb0ac5c50948b6a5e435263920b8b4b99df5159b0a5b35
-  languageName: node
-  linkType: hard
-
 "ink-text-input@npm:^5.0.0":
   version: 5.0.1
   resolution: "ink-text-input@npm:5.0.1"
@@ -4749,7 +4737,6 @@ __metadata:
     ink-select-input: "npm:^5.0.0"
     ink-spinner: "npm:^5.0.0"
     ink-table: "npm:^3.0.0"
-    ink-testing-library: "npm:^3.0.0"
     ink-text-input: "npm:^5.0.0"
     ioredis: "npm:^5.8.1"
     jest: "npm:^30.2.0"
@@ -4763,8 +4750,6 @@ __metadata:
     typescript: "npm:^5.9.3"
     unzipper: "npm:^0.12.3"
     xo: "npm:^0.53.1"
-  bin:
-    inverton: src/cli/index.tsx
   languageName: unknown
   linkType: soft
 

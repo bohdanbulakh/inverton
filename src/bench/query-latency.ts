@@ -1,7 +1,7 @@
 import * as path from 'path';
-import { RedisClient } from '../src/redis/client/client';
-import { SearchMode } from '../src/search/types';
-import { SearchEngine } from '../src/search/search-engine';
+import { RedisClient } from '../redis/client/client';
+import { SearchMode } from '../search/types';
+import { SearchEngine } from '../search/search-engine';
 
 const DOC_COUNT = 10000;
 const REDIS_CONFIG = { port: 6379, host: 'localhost' };
