@@ -10,6 +10,9 @@ const config: Config.InitialOptions = {
     '**/*.integration-test.ts',
   ],
 
+  globalSetup: '<rootDir>/test/integration/global-setup.ts',
+  globalTeardown: '<rootDir>/test/integration/global-teardown.ts',
+
   testTimeout: 30000,
   maxWorkers: 1,
 

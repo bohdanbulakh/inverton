@@ -115,15 +115,8 @@ jobs:
         shell: bash
         run: yarn install --immutable
 
-      - name: Start services (Docker Compose)
-        run: docker compose up -d --wait
-
       - name: Run Integration Tests
         run: yarn test:integration
-
-      - name: Stop services
-        if: always()
-        run: docker compose down
 
   benchmarks:
     name: Benchmarks
