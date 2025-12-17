@@ -4,11 +4,12 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "build": "tsc",
     "test:unit": "jest -c jest.unit.config.ts",
+    "test:ui": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest -c jest.ui.config.ts",
     "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest -c jest.integration.config.ts --runInBand --forceExit",
     "dev": "node --loader ts-node/esm src/index.tsx",
     "start": "node --loader ts-node/esm src/cli/commands/start.tsx",
@@ -18,13 +19,15 @@
     "bench:query": "yarn build && node --loader ts-node/esm dist/bench/query-latency.js"
   },
   "files": [
-    "src", "bench"
+    "src",
+    "bench"
   ],
   "dependencies": {
     "ink": "^4.1.0",
     "ink-select-input": "^5.0.0",
     "ink-spinner": "^5.0.0",
     "ink-table": "^3.0.0",
+    "ink-testing-library": "^4.0.0",
     "ink-text-input": "^5.0.0",
     "ioredis": "^5.8.1",
     "meow": "^11.0.0",
@@ -53,6 +56,7 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "jest": "^30.2.0",
     "prettier": "^2.8.7",
+    "strip-ansi": "^7.1.2",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",

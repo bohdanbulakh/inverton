@@ -11,7 +11,12 @@ import { tokenize } from '../index/tokenizer';
 interface Props {
   searchEngine: SearchEngine;
   docInfoService: DocumentInfoService;
-  onNavigate: (view: 'index') => void;
+  /**
+   * Navigation callback used by the top-level CLI router.
+   * - 'index'  => back/exit
+   * - <docId>  => open a result (used by UI tests / future routing)
+   */
+  onNavigate: (target: string) => void;
 }
 
 export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNavigate }) => {
@@ -74,6 +79,7 @@ export const SearchView: React.FC<Props> = ({ searchEngine, docInfoService, onNa
         docInfoService={docInfoService}
         onExit={() => onNavigate('index')}
         onBack={() => setViewState('input')}
+        onOpenDocument={(docId) => onNavigate(docId)}
       />
     );
   }

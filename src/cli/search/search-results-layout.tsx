@@ -10,15 +10,30 @@ interface Props {
   docInfoService: DocumentInfoService;
   onExit: () => void;
   onBack: () => void;
+  onOpenDocument: (docId: string) => void;
 }
 
-export const SearchResultsLayout: React.FC<Props> = ({ results, terms, docInfoService, onExit, onBack }) => {
+export const SearchResultsLayout: React.FC<Props> = ({
+  results,
+  terms,
+  docInfoService,
+  onExit,
+  onBack,
+  onOpenDocument,
+}) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activePane, setActivePane] = useState<'list' | 'content'>('list');
+  const [activePane, setActivePane] = useState<'list' | 'content'>('content');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
   const { stdout } = useStdout();
-  const height = (stdout?.rows || 24) - 2;
+  const height = Math.max(8, (stdout?.rows || 24) - 2);
+
+  const listViewportSize = Math.max(1, height - 4);
+  const listScrollOffset = Math.min(
+    Math.max(0, activeIndex - Math.floor(listViewportSize / 2)),
+    Math.max(0, results.length - listViewportSize)
+  );
+  const visibleResults = results.slice(listScrollOffset, listScrollOffset + listViewportSize);
 
   const currentResult = results[activeIndex];
 
@@ -58,6 +73,11 @@ export const SearchResultsLayout: React.FC<Props> = ({ results, terms, docInfoSe
     if (activePane === 'list' && results.length > 0) {
       if (key.upArrow) setActiveIndex((i) => Math.max(0, i - 1));
       if (key.downArrow) setActiveIndex((i) => Math.min(results.length - 1, i + 1));
+
+      if (key.return) {
+        const selected = results[activeIndex];
+        if (selected) onOpenDocument(selected.docId);
+      }
     }
   });
 
@@ -77,14 +97,19 @@ export const SearchResultsLayout: React.FC<Props> = ({ results, terms, docInfoSe
         {results.length === 0 ? (
           <Text color="gray" italic>No results found.</Text>
         ) : (
-          results.map((res, i) => (
-            <Box key={res.docId}>
-              <Text color={i === activeIndex ? 'cyan' : 'white'} wrap="truncate-end">
-                {i === activeIndex ? '> ' : '  '}
-                {res.path.split('/').pop()}
-              </Text>
-            </Box>
-          ))
+          <Box flexDirection="column" height={listViewportSize} overflow="hidden">
+            {visibleResults.map((res, idx) => {
+              const i = listScrollOffset + idx;
+              return (
+                <Box key={res.docId}>
+                  <Text color={i === activeIndex ? 'cyan' : 'white'} wrap="truncate-end">
+                    {i === activeIndex ? '> ' : '  '}
+                    {res.path.split('/').pop()}
+                  </Text>
+                </Box>
+              );
+            })}
+          </Box>
         )}
       </Box>
 

@@ -16,6 +16,9 @@ interface Props {
 }
 
 export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive, height }) => {
+  const contentHeight = Math.max(1, height - 1);
+  const outerHeight = height + 2;
+
   const [content, setContent] = useState<string[]>([]);
   const [startLine, setStartLine] = useState(1);
   const [currentHighlightIdx, setCurrentHighlightIdx] = useState(0);
@@ -42,7 +45,7 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
 
   useEffect(() => {
     let mounted = true;
-    readFileWindow(filePath, startLine, startLine + height - 1)
+    readFileWindow(filePath, startLine, startLine + contentHeight - 1)
       .then((window) => {
         if (mounted) setContent(window.lines);
       })
@@ -52,16 +55,16 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     return () => {
       mounted = false;
     };
-  }, [filePath, startLine, height]);
+  }, [filePath, startLine, contentHeight]);
 
   useEffect(() => {
     if (sortedHighlights.length > 0) {
-      setStartLine(Math.max(1, sortedHighlights[0].line - Math.floor(height / 2)));
+      setStartLine(Math.max(1, sortedHighlights[0].line - Math.floor(contentHeight / 2)));
       setCurrentHighlightIdx(0);
     } else {
       setStartLine(1);
     }
-  }, [filePath, height, sortedHighlights]);
+  }, [filePath, contentHeight, sortedHighlights]);
 
   useInput((input, key) => {
     if (!isActive) return;
@@ -70,7 +73,8 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
     if (key.downArrow) {
       setStartLine((prev) => {
         if (totalLines !== null) {
-          return Math.min(prev + 1, totalLines);
+          const maxStart = Math.max(1, totalLines - contentHeight + 1);
+          return Math.min(prev + 1, maxStart);
         }
         return prev + 1;
       });
@@ -80,12 +84,12 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
       if (input === 'n') {
         const next = (currentHighlightIdx + 1) % sortedHighlights.length;
         setCurrentHighlightIdx(next);
-        setStartLine(Math.max(1, sortedHighlights[next].line - Math.floor(height / 2)));
+        setStartLine(Math.max(1, sortedHighlights[next].line - Math.floor(contentHeight / 2)));
       }
       if (input === 'p') {
         const prev = currentHighlightIdx === 0 ? sortedHighlights.length - 1 : currentHighlightIdx - 1;
         setCurrentHighlightIdx(prev);
-        setStartLine(Math.max(1, sortedHighlights[prev].line - Math.floor(height / 2)));
+        setStartLine(Math.max(1, sortedHighlights[prev].line - Math.floor(contentHeight / 2)));
       }
     }
   });
@@ -128,18 +132,22 @@ export const DocumentViewer: React.FC<Props> = ({ filePath, highlights, isActive
   };
 
   return (
-    <Box flexDirection="column" width="100%" height={height} borderStyle="single" borderColor={isActive ? 'green' : 'grey'}>
-      {content.map((line, idx) => (
+    <Box
+      flexDirection="column"
+      width="100%"
+      height={outerHeight}
+      borderStyle="single"
+      borderColor={isActive ? 'green' : 'grey'}
+    >
+      {content.slice(0, contentHeight).map((line, idx) => (
         <Box key={idx} width="100%">
           <Text dimColor>{(startLine + idx).toString().padEnd(4)}│ </Text>
           <Box>{renderLine(line, startLine + idx)}</Box>
         </Box>
       ))}
-      <Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false}>
-        <Text dimColor>
-          Line: {startLine} {totalLines ? `/ ${totalLines}` : ''} | Matches: {sortedHighlights.length} | [n]ext / [p]rev
-        </Text>
-      </Box>
+      <Text dimColor>
+        Line: {startLine} {totalLines ? `/ ${totalLines}` : ''} | Matches: {sortedHighlights.length} | [n]ext / [p]rev
+      </Text>
     </Box>
   );
 };
