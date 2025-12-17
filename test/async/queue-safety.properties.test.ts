@@ -46,7 +46,7 @@ describe('AsyncQueue - Property Based Safety', () => {
   it('INVARIANT: Queue continues processing remaining tasks even when some throw errors', async () => {
     const queue = new AsyncQueue(3);
     const totalTasks = 100;
-    const failureRate = 0.2; // 20% failure chance
+    const failureRate = 0.2;
 
     let successCount = 0;
     let failureCount = 0;
