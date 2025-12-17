@@ -68,6 +68,7 @@ async function runBenchmark () {
   await benchmarkQuery('Boolean: "apple OR orange"', engine, 'apple OR orange', SearchMode.Boolean);
 
   await client.quit();
+  process.exit(0);
 }
 
 runBenchmark().catch(console.error);

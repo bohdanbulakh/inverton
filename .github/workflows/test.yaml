@@ -1,10 +1,11 @@
-name: Unit tests
+name: CI
 
 on:
   push:
 
 jobs:
   test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,6 +41,7 @@ jobs:
 
       - name: Run tests
         run: yarn test:unit
+
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -80,6 +82,54 @@ jobs:
 
       - name: Run Integration Tests
         run: yarn test:integration
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
+
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        shell: bash
+        run: corepack enable
+
+      - name: Activate Yarn version from package.json
+        shell: bash
+        run: corepack install
+
+      - name: Use yarn cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules
+            .yarn/cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        shell: bash
+        run: yarn install --immutable
+
+      - name: Start services (Docker Compose)
+        run: docker compose up -d --wait
+
+      - name: Run Queue Benchmark
+        run: yarn bench:queue
+
+      - name: Run Query Benchmark
+        run: yarn bench:query
 
       - name: Stop services
         if: always()
